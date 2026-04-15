@@ -179,7 +179,6 @@ function calculateSaju() {
   } catch (error) { console.error("Saju error:", error); alert("계산 중 오류가 발생했습니다."); }
 }
 
-// AI Analysis Logic
 async function callGeminiAPI() {
   let apiKey = localStorage.getItem('gemini_api_key');
   if (apiKey) apiKey = apiKey.trim(); // 공백 제거
@@ -195,7 +194,8 @@ async function callGeminiAPI() {
   const prompt = `너는 30년 경력의 대한민국 최고의 명리학 전문가야. 다음 사주팔자 데이터를 바탕으로 이 사람의 타고난 성격, 직업운, 재물운, 그리고 인생의 조언을 아주 상세하고 전문적으로 풀이해줘. 답변은 한국어로 작성하고 마크다운 형식을 사용해줘.\n\n사주 데이터: ${pillarText}\n태어난 일시: ${sajuTextDisplay.innerText}`;
 
   try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+    // 구글 권장 최신 모델명 gemini-2.0-flash-exp로 변경
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`;
     
     const response = await fetch(url, {
       method: 'POST',
@@ -206,6 +206,11 @@ async function callGeminiAPI() {
     if (!response.ok) {
       const errorData = await response.json();
       const errorMsg = errorData.error?.message || "API 호출 실패";
+      
+      if (response.status === 429) {
+        throw new Error("현재 API 키의 할당량이 0입니다. 구글 서버에 키가 등록되는 데 시간이 걸릴 수 있습니다. 10분 정도 뒤에 다시 시도하시거나, 다른 구글 계정으로 새 키를 발급받아보세요.");
+      }
+      
       throw new Error(`[${response.status}] ${errorMsg}`);
     }
 
@@ -228,14 +233,17 @@ async function callGeminiAPI() {
 }
 
 // Settings Modal Logic
+const modelSelect = document.getElementById('modelSelect');
 settingsBtn.onclick = () => {
   apiKeyInput.value = localStorage.getItem('gemini_api_key') || '';
+  modelSelect.value = localStorage.getItem('gemini_model') || 'gemini-1.5-flash';
   settingsModal.classList.remove('hidden');
 };
 closeModalBtn.onclick = () => settingsModal.classList.add('hidden');
 saveKeyBtn.onclick = () => {
   localStorage.setItem('gemini_api_key', apiKeyInput.value.trim());
-  alert("API 키가 저장되었습니다.");
+  localStorage.setItem('gemini_model', modelSelect.value);
+  alert("설정이 저장되었습니다.");
   settingsModal.classList.add('hidden');
 };
 
