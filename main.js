@@ -195,15 +195,61 @@ function updateInterpretation(pillars) {
 
 function calculateSaju() {
   if (!selectedDate) return;
-...
+
+  const year = selectedDate.getFullYear();
+  const month = selectedDate.getMonth() + 1;
+  const day = selectedDate.getDate();
+  const hour = parseInt(hourSelect.value);
+  const minute = parseInt(minuteSelect.value);
+
+  if (typeof Solar === 'undefined') {
+    alert("라이브러리를 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
+    return;
+  }
+
+  try {
+    const solar = Solar.fromYmdHms(year, month, day, hour, minute, 0);
+    const lunar = solar.getLunar();
+    const eightChar = lunar.getEightChar();
+
+    const yearP = getPillar(eightChar, lunar, 'Year');
+    const monthP = getPillar(eightChar, lunar, 'Month');
+    const dayP = getPillar(eightChar, lunar, 'Day');
+    const hourP = getPillar(eightChar, lunar, 'Hour');
+
+    const pillars = [
+      { id: 'yearPillar', data: yearP },
+      { id: 'monthPillar', data: monthP },
+      { id: 'dayPillar', data: dayP },
+      { id: 'hourPillar', data: hourP }
+    ];
+
     pillars.forEach(p => {
-...
+      const el = document.getElementById(p.id);
+      if (!el || !p.data) return;
+
+      const stem = p.data.substring(0, 1);
+      const branch = p.data.substring(1, 2);
+
+      const stemDiv = el.querySelector('.stem');
+      const branchDiv = el.querySelector('.branch');
+
+      if (stemDiv) {
+        stemDiv.innerText = stem;
+        stemDiv.className = `stem ${elementsMap[stem] || ''}`;
+      }
+      
+      if (branchDiv) {
+        branchDiv.innerText = branch;
+        branchDiv.className = `branch ${elementsMap[branch] || ''}`;
+      }
     });
 
     updateInterpretation(pillars);
-    
+
     sajuTextDisplay.innerText = `${yearP}년 ${monthP}월 ${dayP}일 ${hourP}시`;
-...
+    resultContainer.classList.remove('hidden');
+    resultContainer.scrollIntoView({ behavior: 'smooth' });
 
   } catch (error) {
     console.error("Saju calculation error:", error);
