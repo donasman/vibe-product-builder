@@ -197,4 +197,83 @@ body {
   text-align: center;
   font-weight: 600;
   font-size: 1.1rem;
+  padding-bottom: 20px;
+  border-bottom: 2px dashed var(--border-color);
+}
+
+/* Interpretation Styling */
+.interpretation-section {
+  margin-top: 24px;
+}
+
+.interpretation-section h4 {
+  margin-top: 20px;
+  margin-bottom: 12px;
+  font-size: 1rem;
+  color: var(--text-main);
+  border-left: 4px solid var(--primary);
+  padding-left: 10px;
+}
+
+.elements-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.stat-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.stat-label {
+  width: 40px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.stat-bar-bg {
+  flex: 1;
+  height: 12px;
+  background: #f1f5f9;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.stat-bar-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 1s ease-out;
+}
+
+.stat-count {
+  width: 20px;
+  font-size: 0.85rem;
+  text-align: right;
+  color: var(--text-muted);
+}
+
+.personality-card, .advice-card {
+  background: #f8fafc;
+  padding: 16px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  border: 1px solid var(--border-color);
+}
+
+.personality-card h4, .advice-card h4 {
+  border: none;
+  padding: 0;
+  margin-top: 0;
+  margin-bottom: 8px;
+  color: var(--primary);
+}
+
+.personality-card p, .advice-card p {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--text-main);
 }
