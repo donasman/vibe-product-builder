@@ -3,12 +3,27 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hello World</title>
+  <title>Select a Date</title>
   <link href='/style.css' rel='stylesheet'>
 </head>
 <body>
-  <h1>Hello, world!</h1>
-  <button onclick="console.log('hello');">Press me</button>
+  <div class="app-container">
+    <div class="calendar-card">
+      <div class="calendar-header">
+        <button id="prevMonth" class="nav-btn">&larr;</button>
+        <h2 id="monthDisplay">Month Year</h2>
+        <button id="nextMonth" class="nav-btn">&rarr;</button>
+      </div>
+      <div class="calendar-weekdays">
+        <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+      </div>
+      <div id="calendarDays" class="calendar-days"></div>
+      <div class="calendar-footer">
+        <p>Selected: <span id="selectedDateDisplay">None</span></p>
+        <button id="confirmBtn" class="confirm-btn" disabled>Confirm Date</button>
+      </div>
+    </div>
+  </div>
   <script defer type="text/javascript" src="/main.js"></script>
 </body>
 </html>
