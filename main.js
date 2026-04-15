@@ -181,7 +181,9 @@ function calculateSaju() {
 
 // AI Analysis Logic
 async function callGeminiAPI() {
-  const apiKey = localStorage.getItem('gemini_api_key');
+  let apiKey = localStorage.getItem('gemini_api_key');
+  if (apiKey) apiKey = apiKey.trim(); // 공백 제거
+
   if (!apiKey) { alert("먼저 설정(⚙️)에서 Gemini API 키를 입력해주세요."); settingsModal.classList.remove('hidden'); return; }
   if (!currentPillars) return;
 
@@ -193,24 +195,32 @@ async function callGeminiAPI() {
   const prompt = `너는 30년 경력의 대한민국 최고의 명리학 전문가야. 다음 사주팔자 데이터를 바탕으로 이 사람의 타고난 성격, 직업운, 재물운, 그리고 인생의 조언을 아주 상세하고 전문적으로 풀이해줘. 답변은 한국어로 작성하고 마크다운 형식을 사용해줘.\n\n사주 데이터: ${pillarText}\n태어난 일시: ${sajuTextDisplay.innerText}`;
 
   try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+    
+    const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
     });
 
+    if (!response.ok) {
+      const errorData = await response.json();
+      const errorMsg = errorData.error?.message || "API 호출 실패";
+      throw new Error(`[${response.status}] ${errorMsg}`);
+    }
+
     const data = await response.json();
-    if (data.candidates && data.candidates[0].content.parts[0].text) {
+    if (data.candidates && data.candidates[0].content && data.candidates[0].content.parts[0].text) {
       const markdownText = data.candidates[0].content.parts[0].text;
       aiContent.innerHTML = marked.parse(markdownText);
       aiResultArea.classList.remove('hidden');
       aiResultArea.scrollIntoView({ behavior: 'smooth' });
     } else {
-      throw new Error("API 응답 형식이 올바르지 않습니다.");
+      throw new Error("AI 답변을 생성할 수 없는 사주입니다. (안전 필터에 의해 차단되었을 수 있습니다)");
     }
   } catch (error) {
     console.error("AI Error:", error);
-    alert("AI 분석 중 오류가 발생했습니다. API 키를 확인하거나 잠시 후 다시 시도해주세요.");
+    alert(`AI 분석 오류: ${error.message}`);
   } finally {
     aiLoading.classList.add('hidden');
     aiAnalysisBtn.disabled = false;
