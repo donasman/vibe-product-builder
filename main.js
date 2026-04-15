@@ -194,8 +194,8 @@ async function callGeminiAPI() {
   const prompt = `너는 30년 경력의 대한민국 최고의 명리학 전문가야. 다음 사주팔자 데이터를 바탕으로 이 사람의 타고난 성격, 직업운, 재물운, 그리고 인생의 조언을 아주 상세하고 전문적으로 풀이해줘. 답변은 한국어로 작성하고 마크다운 형식을 사용해줘.\n\n사주 데이터: ${pillarText}\n태어난 일시: ${sajuTextDisplay.innerText}`;
 
   try {
-    // 구글 권장 최신 모델명 gemini-2.0-flash-exp로 변경
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`;
+    // 2026년 기준 신규 사용자에게 권장되는 최신 안정화 모델인 gemini-2.5-flash 사용
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
     
     const response = await fetch(url, {
       method: 'POST',
