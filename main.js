@@ -10,8 +10,20 @@ const minuteSelect = document.getElementById('minuteSelect');
 const resultContainer = document.getElementById('resultContainer');
 const sajuTextDisplay = document.getElementById('sajuText');
 
+// AI Elements
+const aiAnalysisBtn = document.getElementById('aiAnalysisBtn');
+const aiLoading = document.getElementById('aiLoading');
+const aiResultArea = document.getElementById('aiResultArea');
+const aiContent = document.getElementById('aiContent');
+const settingsBtn = document.getElementById('settingsBtn');
+const settingsModal = document.getElementById('settingsModal');
+const apiKeyInput = document.getElementById('apiKeyInput');
+const saveKeyBtn = document.getElementById('saveKeyBtn');
+const closeModalBtn = document.getElementById('closeModalBtn');
+
 let currentDate = new Date();
 let selectedDate = null;
+let currentPillars = null;
 
 // Initialize Header Selects (1900 to 2100)
 for (let i = 1900; i <= 2100; i++) {
@@ -52,41 +64,32 @@ const elementsMap = {
 function renderCalendar() {
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
-  
   yearSelectHeader.value = year;
   monthSelectHeader.value = month;
-
   const firstDayOfMonth = new Date(year, month, 1).getDay();
   const lastDateOfMonth = new Date(year, month + 1, 0).getDate();
-
   calendarDays.innerHTML = "";
-
   for (let i = 0; i < firstDayOfMonth; i++) {
     const dayDiv = document.createElement("div");
     dayDiv.classList.add("day", "empty");
     calendarDays.appendChild(dayDiv);
   }
-
   for (let i = 1; i <= lastDateOfMonth; i++) {
     const dayDiv = document.createElement("div");
     dayDiv.classList.add("day");
     dayDiv.innerText = i;
-
     const today = new Date();
     if (i === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
       dayDiv.classList.add("today");
     }
-
     if (selectedDate && i === selectedDate.getDate() && month === selectedDate.getMonth() && year === selectedDate.getFullYear()) {
       dayDiv.classList.add("selected");
     }
-
     dayDiv.addEventListener("click", () => {
       selectedDate = new Date(year, month, i);
       updateSelectedDisplay();
       renderCalendar();
     });
-
     calendarDays.appendChild(dayDiv);
   }
 }
@@ -98,40 +101,19 @@ function updateSelectedDisplay() {
   }
 }
 
-// Helper to get pillar safely
 function getPillar(eightChar, lunar, type) {
-  // Try various method names based on different library versions
-  const methods = [
-    `get${type}`, 
-    `get${type}GanZhi`, 
-    `get${type}InGanZhi`,
-    // Some versions use 'Time' instead of 'Hour'
-    type === 'Hour' ? 'getTime' : null,
-    type === 'Hour' ? 'getTimeGanZhi' : null
-  ].filter(Boolean);
-  
+  const methods = [`get${type}`, `get${type}GanZhi`, `get${type}InGanZhi`, type === 'Hour' ? 'getTime' : null, type === 'Hour' ? 'getTimeGanZhi' : null].filter(Boolean);
   for (let m of methods) {
     if (typeof eightChar[m] === 'function') return eightChar[m]();
   }
-  
-  // Fallback to separate Gan and Zhi
-  const ganMethod = `get${type}Gan`;
-  const zhiMethod = `get${type}Zhi`;
+  const ganMethod = `get${type}Gan`, zhiMethod = `get${type}Zhi`;
   if (typeof eightChar[ganMethod] === 'function' && typeof eightChar[zhiMethod] === 'function') {
     return eightChar[ganMethod]() + eightChar[zhiMethod]();
   }
-
-  // Final fallback: try getting from lunar object directly
-  const lunarMethods = [
-    `get${type}InGanZhi`,
-    `get${type}GanZhi`,
-    type === 'Hour' ? 'getTimeInGanZhi' : null
-  ].filter(Boolean);
-
+  const lunarMethods = [`get${type}InGanZhi`, `get${type}GanZhi`, type === 'Hour' ? 'getTimeInGanZhi' : null].filter(Boolean);
   for (let m of lunarMethods) {
     if (typeof lunar[m] === 'function') return lunar[m]();
   }
-  
   return "??";
 }
 
@@ -148,136 +130,111 @@ const dayMasterInfo = {
   '癸': { title: '계수(癸水) - 맑은 이슬과 빗물', desc: '상냥하고 영리하며 눈치가 빠릅니다. 주변 사람을 잘 챙기고 꼼꼼하지만, 마음이 여려 상처를 잘 받을 수 있습니다.' }
 };
 
-const elementsDesc = {
-  'wood': '나무(木)', 'fire': '불(火)', 'earth': '흙(土)', 'metal': '금(金)', 'water': '물(水)'
-};
+const elementsDesc = { 'wood': '나무(木)', 'fire': '불(火)', 'earth': '흙(土)', 'metal': '금(金)', 'water': '물(水)' };
 
 function updateInterpretation(pillars) {
   const elementsCount = { 'wood': 0, 'fire': 0, 'earth': 0, 'metal': 0, 'water': 0 };
-  
-  // 1. Count Elements from Stems and Branches
   pillars.forEach(p => {
     if (!p.data) return;
-    const stem = p.data.substring(0, 1);
-    const branch = p.data.substring(1, 2);
-    
+    const stem = p.data.substring(0, 1), branch = p.data.substring(1, 2);
     if (elementsMap[stem]) elementsCount[elementsMap[stem]]++;
     if (elementsMap[branch]) elementsCount[elementsMap[branch]]++;
   });
-
-  // 2. Identify Day Master (Ilgan)
   const dayMaster = pillars.find(p => p.id === 'dayPillar').data.substring(0, 1);
   const info = dayMasterInfo[dayMaster] || { title: '분석 불가', desc: '정확한 정보를 불러올 수 없습니다.' };
-  
   document.getElementById('dayMasterTitle').innerText = `나의 성향: ${info.title}`;
   document.getElementById('personalityText').innerText = info.desc;
-
-  // 3. Render Stats Chart
   const statsContainer = document.getElementById('elementsStats');
   statsContainer.innerHTML = '';
-  
   Object.keys(elementsCount).forEach(key => {
-    const count = elementsCount[key];
-    const percentage = (count / 8) * 100; // total characters is 8
-    
+    const count = elementsCount[key], percentage = (count / 8) * 100;
     const row = document.createElement('div');
     row.className = 'stat-row';
-    row.innerHTML = `
-      <div class="stat-label">${elementsDesc[key]}</div>
-      <div class="stat-bar-bg">
-        <div class="stat-bar-fill" style="width: ${percentage}%; background-color: var(--${key})"></div>
-      </div>
-      <div class="stat-count">${count}</div>
-    `;
+    row.innerHTML = `<div class="stat-label">${elementsDesc[key]}</div><div class="stat-bar-bg"><div class="stat-bar-fill" style="width: ${percentage}%; background-color: var(--${key})"></div></div><div class="stat-count">${count}</div>`;
     statsContainer.appendChild(row);
   });
 }
 
 function calculateSaju() {
   if (!selectedDate) return;
-
-  const year = selectedDate.getFullYear();
-  const month = selectedDate.getMonth() + 1;
-  const day = selectedDate.getDate();
-  const hour = parseInt(hourSelect.value);
-  const minute = parseInt(minuteSelect.value);
-
-  if (typeof Solar === 'undefined') {
-    alert("라이브러리를 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
-    return;
-  }
-
+  const year = selectedDate.getFullYear(), month = selectedDate.getMonth() + 1, day = selectedDate.getDate(), hour = parseInt(hourSelect.value), minute = parseInt(minuteSelect.value);
+  if (typeof Solar === 'undefined') { alert("라이브러리를 불러오는 중입니다. 잠시 후 다시 시도해주세요."); return; }
   try {
-    const solar = Solar.fromYmdHms(year, month, day, hour, minute, 0);
-    const lunar = solar.getLunar();
-    const eightChar = lunar.getEightChar();
-
-    const yearP = getPillar(eightChar, lunar, 'Year');
-    const monthP = getPillar(eightChar, lunar, 'Month');
-    const dayP = getPillar(eightChar, lunar, 'Day');
-    const hourP = getPillar(eightChar, lunar, 'Hour');
-
-    const pillars = [
-      { id: 'yearPillar', data: yearP },
-      { id: 'monthPillar', data: monthP },
-      { id: 'dayPillar', data: dayP },
-      { id: 'hourPillar', data: hourP }
-    ];
-
-    pillars.forEach(p => {
+    const solar = Solar.fromYmdHms(year, month, day, hour, minute, 0), lunar = solar.getLunar(), eightChar = lunar.getEightChar();
+    const yearP = getPillar(eightChar, lunar, 'Year'), monthP = getPillar(eightChar, lunar, 'Month'), dayP = getPillar(eightChar, lunar, 'Day'), hourP = getPillar(eightChar, lunar, 'Hour');
+    currentPillars = [{ id: 'yearPillar', data: yearP }, { id: 'monthPillar', data: monthP }, { id: 'dayPillar', data: dayP }, { id: 'hourPillar', data: hourP }];
+    currentPillars.forEach(p => {
       const el = document.getElementById(p.id);
       if (!el || !p.data) return;
-
-      const stem = p.data.substring(0, 1);
-      const branch = p.data.substring(1, 2);
-
-      const stemDiv = el.querySelector('.stem');
-      const branchDiv = el.querySelector('.branch');
-
-      if (stemDiv) {
-        stemDiv.innerText = stem;
-        stemDiv.className = `stem ${elementsMap[stem] || ''}`;
-      }
-      
-      if (branchDiv) {
-        branchDiv.innerText = branch;
-        branchDiv.className = `branch ${elementsMap[branch] || ''}`;
-      }
+      const stem = p.data.substring(0, 1), branch = p.data.substring(1, 2);
+      const stemDiv = el.querySelector('.stem'), branchDiv = el.querySelector('.branch');
+      if (stemDiv) { stemDiv.innerText = stem; stemDiv.className = `stem ${elementsMap[stem] || ''}`; }
+      if (branchDiv) { branchDiv.innerText = branch; branchDiv.className = `branch ${elementsMap[branch] || ''}`; }
     });
-
-    updateInterpretation(pillars);
-
+    updateInterpretation(currentPillars);
     sajuTextDisplay.innerText = `${yearP}년 ${monthP}월 ${dayP}일 ${hourP}시`;
     resultContainer.classList.remove('hidden');
+    aiResultArea.classList.add('hidden'); // Reset AI area
     resultContainer.scrollIntoView({ behavior: 'smooth' });
+  } catch (error) { console.error("Saju error:", error); alert("계산 중 오류가 발생했습니다."); }
+}
 
+// AI Analysis Logic
+async function callGeminiAPI() {
+  const apiKey = localStorage.getItem('gemini_api_key');
+  if (!apiKey) { alert("먼저 설정(⚙️)에서 Gemini API 키를 입력해주세요."); settingsModal.classList.remove('hidden'); return; }
+  if (!currentPillars) return;
+
+  aiLoading.classList.remove('hidden');
+  aiAnalysisBtn.disabled = true;
+  aiResultArea.classList.add('hidden');
+
+  const pillarText = currentPillars.map(p => p.data).join(' ');
+  const prompt = `너는 30년 경력의 대한민국 최고의 명리학 전문가야. 다음 사주팔자 데이터를 바탕으로 이 사람의 타고난 성격, 직업운, 재물운, 그리고 인생의 조언을 아주 상세하고 전문적으로 풀이해줘. 답변은 한국어로 작성하고 마크다운 형식을 사용해줘.\n\n사주 데이터: ${pillarText}\n태어난 일시: ${sajuTextDisplay.innerText}`;
+
+  try {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+    });
+
+    const data = await response.json();
+    if (data.candidates && data.candidates[0].content.parts[0].text) {
+      const markdownText = data.candidates[0].content.parts[0].text;
+      aiContent.innerHTML = marked.parse(markdownText);
+      aiResultArea.classList.remove('hidden');
+      aiResultArea.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      throw new Error("API 응답 형식이 올바르지 않습니다.");
+    }
   } catch (error) {
-    console.error("Saju calculation error:", error);
-    alert("계산 중 오류가 발생했습니다. 라이브러리 구조가 다를 수 있습니다.");
+    console.error("AI Error:", error);
+    alert("AI 분석 중 오류가 발생했습니다. API 키를 확인하거나 잠시 후 다시 시도해주세요.");
+  } finally {
+    aiLoading.classList.add('hidden');
+    aiAnalysisBtn.disabled = false;
   }
 }
 
-// Event Listeners for Header Selects
-yearSelectHeader.addEventListener('change', () => {
-  currentDate.setFullYear(yearSelectHeader.value);
-  renderCalendar();
-});
-monthSelectHeader.addEventListener('change', () => {
-  currentDate.setMonth(monthSelectHeader.value);
-  renderCalendar();
-});
+// Settings Modal Logic
+settingsBtn.onclick = () => {
+  apiKeyInput.value = localStorage.getItem('gemini_api_key') || '';
+  settingsModal.classList.remove('hidden');
+};
+closeModalBtn.onclick = () => settingsModal.classList.add('hidden');
+saveKeyBtn.onclick = () => {
+  localStorage.setItem('gemini_api_key', apiKeyInput.value.trim());
+  alert("API 키가 저장되었습니다.");
+  settingsModal.classList.add('hidden');
+};
 
-prevMonthBtn.addEventListener("click", () => {
-  currentDate.setMonth(currentDate.getMonth() - 1);
-  renderCalendar();
-});
+// Calendar Event Listeners
+yearSelectHeader.addEventListener('change', () => { currentDate.setFullYear(yearSelectHeader.value); renderCalendar(); });
+monthSelectHeader.addEventListener('change', () => { currentDate.setMonth(monthSelectHeader.value); renderCalendar(); });
+prevMonthBtn.onclick = () => { currentDate.setMonth(currentDate.getMonth() - 1); renderCalendar(); };
+nextMonthBtn.onclick = () => { currentDate.setMonth(currentDate.getMonth() + 1); renderCalendar(); };
+confirmBtn.onclick = calculateSaju;
+aiAnalysisBtn.onclick = callGeminiAPI;
 
-nextMonthBtn.addEventListener("click", () => {
-  currentDate.setMonth(currentDate.getMonth() + 1);
-  renderCalendar();
-});
-
-confirmBtn.addEventListener("click", calculateSaju);
-
-// Initial render
 renderCalendar();
