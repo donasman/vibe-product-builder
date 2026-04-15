@@ -1,27 +1,75 @@
 <!doctype html>
-<html lang="en">
+<html lang="ko">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Select a Date</title>
+  <title>만세력 (사주팔자) 계산기</title>
   <link href='/style.css' rel='stylesheet'>
+  <!-- lunar-javascript library for Saju calculation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lunar-javascript/1.6.12/lunar.js"></script>
 </head>
 <body>
   <div class="app-container">
     <div class="calendar-card">
       <div class="calendar-header">
         <button id="prevMonth" class="nav-btn">&larr;</button>
-        <h2 id="monthDisplay">Month Year</h2>
+        <div class="header-selects">
+          <select id="yearSelectHeader"></select>
+          <select id="monthSelectHeader"></select>
+        </div>
         <button id="nextMonth" class="nav-btn">&rarr;</button>
       </div>
       <div class="calendar-weekdays">
-        <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+        <span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>
       </div>
       <div id="calendarDays" class="calendar-days"></div>
-      <div class="calendar-footer">
-        <p>Selected: <span id="selectedDateDisplay">None</span></p>
-        <button id="confirmBtn" class="confirm-btn" disabled>Confirm Date</button>
+      
+      <div class="time-selection">
+        <div class="input-group">
+          <label for="hourSelect">시간</label>
+          <select id="hourSelect">
+            <!-- 0 to 23 hours -->
+          </select>
+        </div>
+        <div class="input-group">
+          <label for="minuteSelect">분</label>
+          <select id="minuteSelect">
+            <!-- 0 to 59 minutes -->
+          </select>
+        </div>
       </div>
+
+      <div class="calendar-footer">
+        <p>선택된 날짜: <span id="selectedDateDisplay">날짜를 선택하세요</span></p>
+        <button id="confirmBtn" class="confirm-btn" disabled>만세력 확인하기</button>
+      </div>
+    </div>
+
+    <div id="resultContainer" class="result-container hidden">
+      <h3>사주팔자 결과</h3>
+      <div class="saju-table">
+        <div class="pillar" id="hourPillar">
+          <div class="label">시주</div>
+          <div class="stem"></div>
+          <div class="branch"></div>
+        </div>
+        <div class="pillar" id="dayPillar">
+          <div class="label">일주</div>
+          <div class="stem"></div>
+          <div class="branch"></div>
+        </div>
+        <div class="pillar" id="monthPillar">
+          <div class="label">월주</div>
+          <div class="stem"></div>
+          <div class="branch"></div>
+        </div>
+        <div class="pillar" id="yearPillar">
+          <div class="label">연주</div>
+          <div class="stem"></div>
+          <div class="branch"></div>
+        </div>
+      </div>
+      <div id="sajuText" class="saju-text"></div>
     </div>
   </div>
   <script defer type="text/javascript" src="/main.js"></script>

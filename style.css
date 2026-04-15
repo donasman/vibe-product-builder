@@ -1,12 +1,19 @@
 :root {
   --primary: #6366f1;
   --primary-hover: #4f46e5;
-  --bg-color: #f8fafc;
+  --bg-color: #f1f5f9;
   --card-bg: #ffffff;
   --text-main: #1e293b;
   --text-muted: #64748b;
   --border-color: #e2e8f0;
   --transition: all 0.2s ease;
+
+  /* O-haeng (Five Elements) Colors */
+  --wood: #22c55e;
+  --fire: #ef4444;
+  --earth: #eab308;
+  --metal: #94a3b8;
+  --water: #1e293b;
 }
 
 body {
@@ -22,16 +29,16 @@ body {
 
 .app-container {
   width: 100%;
-  max-width: 400px;
+  max-width: 480px;
   padding: 20px;
 }
 
 .calendar-card {
   background: var(--card-bg);
   border-radius: 1.5rem;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
   padding: 24px;
-  overflow: hidden;
+  margin-bottom: 24px;
 }
 
 .calendar-header {
@@ -41,11 +48,19 @@ body {
   margin-bottom: 24px;
 }
 
-.calendar-header h2 {
-  font-size: 1.25rem;
+.header-selects {
+  display: flex;
+  gap: 8px;
+}
+
+.header-selects select {
+  font-size: 1.1rem;
   font-weight: 700;
-  margin: 0;
-  color: var(--text-main);
+  border: 1px solid var(--border-color);
+  background: white;
+  padding: 4px 8px;
+  border-radius: 8px;
+  cursor: pointer;
 }
 
 .nav-btn {
@@ -58,29 +73,16 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: var(--transition);
-  color: var(--text-muted);
-}
-
-.nav-btn:hover {
-  border-color: var(--primary);
-  color: var(--primary);
-  background-color: #f0fdf4;
 }
 
 .calendar-weekdays {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   margin-bottom: 12px;
-}
-
-.calendar-weekdays span {
-  text-align: center;
+  color: var(--text-muted);
   font-size: 0.8rem;
   font-weight: 600;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  text-align: center;
 }
 
 .calendar-days {
@@ -95,53 +97,49 @@ body {
   align-items: center;
   justify-content: center;
   font-size: 0.95rem;
-  font-weight: 500;
   cursor: pointer;
   border-radius: 12px;
   transition: var(--transition);
-  user-select: none;
 }
 
-.day:hover:not(.empty) {
-  background-color: #f1f5f9;
+.day:hover:not(.empty) { background-color: #f1f5f9; }
+.day.selected { background-color: var(--primary); color: white; }
+.day.today { color: var(--primary); font-weight: 700; border: 2px solid var(--primary); }
+.day.empty { cursor: default; }
+
+.time-selection {
+  margin-top: 24px;
+  display: flex;
+  gap: 16px;
 }
 
-.day.selected {
-  background-color: var(--primary);
-  color: white;
-  font-weight: 700;
+.input-group {
+  flex: 1;
 }
 
-.day.today {
-  color: var(--primary);
-  border: 2px solid var(--primary);
+.input-group label {
+  display: block;
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+  color: var(--text-muted);
 }
 
-.day.empty {
-  cursor: default;
+.input-group select {
+  width: 100%;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background-color: #f8fafc;
 }
 
 .calendar-footer {
   margin-top: 24px;
   padding-top: 20px;
   border-top: 1px solid var(--border-color);
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.calendar-footer p {
-  margin: 0;
-  font-size: 0.9rem;
-  color: var(--text-muted);
-}
-
-#selectedDateDisplay {
-  color: var(--text-main);
-  font-weight: 600;
 }
 
 .confirm-btn {
+  width: 100%;
   background-color: var(--primary);
   color: white;
   border: none;
@@ -150,16 +148,53 @@ body {
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: var(--transition);
 }
 
-.confirm-btn:disabled {
-  background-color: var(--border-color);
-  cursor: not-allowed;
-  opacity: 0.6;
+.confirm-btn:disabled { background-color: var(--border-color); opacity: 0.6; }
+
+/* Result Section */
+.result-container {
+  background: var(--card-bg);
+  border-radius: 1.5rem;
+  padding: 24px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
 }
 
-.confirm-btn:not(:disabled):hover {
-  background-color: var(--primary-hover);
-  transform: translateY(-1px);
+.result-container.hidden { display: none; }
+
+.result-container h3 {
+  text-align: center;
+  margin-top: 0;
+  margin-bottom: 24px;
+}
+
+.saju-table {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.pillar {
+  text-align: center;
+  background: #f8fafc;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+}
+
+.pillar .label { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px; }
+.pillar .stem, .pillar .branch { font-size: 1.5rem; font-weight: 700; margin-bottom: 4px; }
+
+/* Five Elements Styling */
+.wood { color: var(--wood); }
+.fire { color: var(--fire); }
+.earth { color: var(--earth); }
+.metal { color: var(--metal); }
+.water { color: var(--water); }
+
+.saju-text {
+  margin-top: 20px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 1.1rem;
 }
