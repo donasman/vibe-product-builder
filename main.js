@@ -185,25 +185,31 @@ function calculateSaju() {
         resultContainer.classList.remove('hidden');
         resultContainer.scrollIntoView({ behavior: 'smooth' });
 
+        // 로딩 초기화
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-        const personalityTab = document.querySelector('.tab-btn[data-topic="personality"]');
-        personalityTab.classList.add('active');
+        document.querySelector('.tab-btn[data-topic="personality"]').classList.add('active');
         currentTopic = 'personality';
-        fullAnalysisData = null; // 분석 데이터 초기화
+        fullAnalysisData = null; 
         
-        // 1. 성격 탭 내용 즉시 표시
-        displayTopicContent('personality');
-        aiResultArea.classList.remove('hidden');
-        aiLoading.classList.add('hidden');
+        aiLoading.classList.remove('hidden');
+        aiResultArea.classList.add('hidden');
         
-        // 2. 나머지 운세 정보는 백그라운드에서 가져옴
+        // 데이터 가져오기 시작
         getAIFullAnalysis();
 
     } catch (error) { console.error("Saju error:", error); alert("계산 중 오류가 발생했습니다."); }
 }
 
 function displayTopicContent(topic) {
+    // 데이터가 아직 없으면 로딩 표시
+    if (!fullAnalysisData && topic !== 'personality') {
+        aiLoading.classList.remove('hidden');
+        aiResultArea.classList.add('hidden');
+        return;
+    }
+
     aiLoading.classList.add('hidden');
+    aiResultArea.classList.remove('hidden');
 
     if (topic === 'personality') {
         if (!currentPillars) return;
@@ -213,12 +219,8 @@ function displayTopicContent(topic) {
         aiContent.innerHTML = marked.parse(content);
         return;
     }
-
-    if (!fullAnalysisData) {
-        aiLoading.classList.remove('hidden');
-        aiContent.innerHTML = ""; 
-        return;
-    }
+    
+    // ... 나머지 로직 동일
     
     const topicInfo = {
         job: { name: '직업운', pattern: '[\\*\\s]*직업( ?운)?' },
