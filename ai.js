@@ -1,7 +1,7 @@
 export const CONFIG = {
   API_KEY: 'AIzaSyCXl9anPpc8BfMz1jB3qj7b7ZTR31hp_h8',
   MODEL: 'gemini-1.5-flash',
-  BASE_URL: 'https://generativelanguage.googleapis.com/v1/models'
+  BASE_URL: 'https://generativelanguage.googleapis.com/v1'
 };
 
 export const createPrompt = (pillarText, sajuInfo) => {
@@ -14,7 +14,8 @@ export const createPrompt = (pillarText, sajuInfo) => {
 };
 
 export async function fetchFullAnalysis(pillarText, sajuInfo, retries = 3, backoff = 2000, signal = null) {
-  const url = `${CONFIG.BASE_URL}/${CONFIG.MODEL}:generateContent?key=${CONFIG.API_KEY}`;
+  // 정확한 API 규격에 맞춘 URL 구성
+  const url = `${CONFIG.BASE_URL}/models/${CONFIG.MODEL}:generateContent?key=${CONFIG.API_KEY}`;
   const prompt = createPrompt(pillarText, sajuInfo);
 
   const response = await fetch(url, {
