@@ -219,40 +219,40 @@ async function runAIAnalysis() {
     
     const pillarText = currentPillars.map(p => p.data).join(' ');
     const sajuInfo = sajuTextDisplay.innerText;
-    const name = nameInput.value; // 이름 정보 가져오기
+    const name = nameInput.value; 
     
     const otherTabs = analysisTabs.querySelectorAll('button:not([data-topic="personality"])');
     otherTabs.forEach(btn => btn.disabled = true);
 
-    try {
-        fullAnalysisData = await fetchFullAnalysis(pillarText, sajuInfo, name, 3, 2000, abortController.signal);
-        aiLoading.classList.add('hidden');
-        aiResultArea.classList.remove('hidden');
-        displayTopicContent(currentTopic);
-    } catch (error) {
-        if (error.name === 'AbortError') return;
-        console.error(error);
-        
-        // 에러 발생 시 UI 상태
-        aiLoading.classList.add('hidden');
-        aiResultArea.classList.remove('hidden');
-        
-        aiContent.innerHTML = `
-            <div style="text-align: center; padding: 20px;">
-                <p style="color:red; margin-bottom: 20px;">분석 중 오류가 발생했습니다: ${error.message}</p>
-                <button id="retryBtn" class="confirm-btn" style="padding: 10px 20px; font-size: 0.9rem;">다시 시도하기</button>
-            </div>
-        `;
-        
-        // 다시 시도 버튼 클릭 시 로딩 화면으로 전환 후 분석 재실행
-        document.getElementById('retryBtn').onclick = () => {
-            aiResultArea.classList.add('hidden');
-            aiLoading.classList.remove('hidden');
-            runAIAnalysis();
-        };
-        fullAnalysisData = null;
-    } finally {
-        otherTabs.forEach(btn => btn.disabled = false);
+    const maxRetries = 3;
+    for (let i = 0; i < maxRetries; i++) {
+        try {
+            fullAnalysisData = await fetchFullAnalysis(pillarText, sajuInfo, name, 1, 0, abortController.signal);
+            aiLoading.classList.add('hidden');
+            aiResultArea.classList.remove('hidden');
+            displayTopicContent(currentTopic);
+            otherTabs.forEach(btn => btn.disabled = false);
+            return;
+        } catch (error) {
+            if (error.name === 'AbortError') return;
+            console.error(`시도 ${i + 1} 실패:`, error);
+            
+            if (i < maxRetries - 1) {
+                await new Promise(resolve => setTimeout(resolve, 2000));
+            } else {
+                aiLoading.classList.add('hidden');
+                aiResultArea.classList.remove('hidden');
+                aiContent.innerHTML = `
+                    <div style="text-align: center; padding: 20px;">
+                        <p style="color:red; margin-bottom: 20px;">분석 중 오류가 발생했습니다: ${error.message}</p>
+                        <button id="retryBtn" class="confirm-btn">다시 시도하기</button>
+                    </div>
+                `;
+                document.getElementById('retryBtn').onclick = runAIAnalysis;
+                fullAnalysisData = null;
+                otherTabs.forEach(btn => btn.disabled = false);
+            }
+        }
     }
 }
 
