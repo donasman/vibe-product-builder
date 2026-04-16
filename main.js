@@ -220,13 +220,14 @@ async function runAIAnalysis() {
     
     const otherTabs = analysisTabs.querySelectorAll('button:not([data-topic="personality"])');
     otherTabs.forEach(btn => btn.disabled = true);
+try {
+    fullAnalysisData = await fetchFullAnalysis(pillarText, sajuInfo, abortController.signal);
+    // 분석 완료 시 로딩 감추고 결과 영역 표시
+    aiLoading.classList.add('hidden');
+    aiResultArea.classList.remove('hidden');
+    displayTopicContent(currentTopic);
+} catch (error) {
 
-    try {
-        fullAnalysisData = await fetchFullAnalysis(pillarText, sajuInfo, 3, 2000, abortController.signal);
-        aiLoading.classList.add('hidden');
-        aiResultArea.classList.remove('hidden');
-        displayTopicContent(currentTopic);
-    } catch (error) {
         if (error.name === 'AbortError') return;
         console.error(error);
         aiLoading.classList.add('hidden');
