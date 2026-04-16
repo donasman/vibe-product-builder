@@ -1,6 +1,6 @@
 export const CONFIG = {
   API_KEY: 'AIzaSyCXl9anPpc8BfMz1jB3qj7b7ZTR31hp_h8',
-  MODEL: 'gemini-2.5-flash',
+  MODEL: 'gemini-2.0-flash',
   BASE_URL: 'https://generativelanguage.googleapis.com/v1'
 };
 
@@ -22,18 +22,35 @@ export async function fetchFullAnalysis(pillarText, sajuInfo, name, retries = 3,
   const url = `${CONFIG.BASE_URL}/models/${CONFIG.MODEL}:generateContent?key=${CONFIG.API_KEY}`;
   const prompt = createPrompt(pillarText, sajuInfo, name);
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
-    signal
-  });
+  let response;
+  for (let i = 0; i < retries; i++) {
+    try {
+      response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+        signal
+      });
 
-  if (!response.ok) {
-    const err = await response.json();
-    throw new Error(err.error?.message || `API 오류: ${response.status}`);
+      if (response.ok) break;
+      if (response.status === 503 && i < retries - 1) {
+        await new Promise(resolve => setTimeout(resolve, backoff));
+        backoff *= 2; // 다음 대기 시간 2배로 증가
+        continue;
+      }
+      throw new Error(`API 오류: ${response.status}`);
+    } catch (e) {
+      if (i === retries - 1) throw e;
+      await new Promise(resolve => setTimeout(resolve, backoff));
+      backoff *= 2;
+    }
   }
+
+  if (!response) throw new Error("API로부터 응답을 받지 못했습니다.");
   
   const data = await response.json();
+  if (!data.candidates || !data.candidates[0].content) {
+    throw new Error("API로부터 유효한 답변을 받지 못했습니다.");
+  }
   return data.candidates[0].content.parts[0].text;
 }
