@@ -1,3 +1,5 @@
+import { elementsMap, elementsDesc, dayMasterInfo } from './data.js';
+
 const yearSelectHeader = document.getElementById('yearSelectHeader');
 const monthSelectHeader = document.getElementById('monthSelectHeader');
 const calendarDays = document.getElementById('calendarDays');
@@ -9,6 +11,9 @@ const hourSelect = document.getElementById('hourSelect');
 const minuteSelect = document.getElementById('minuteSelect');
 const resultContainer = document.getElementById('resultContainer');
 const sajuTextDisplay = document.getElementById('sajuText');
+
+// 기본 API 키 설정 (보안 주의: 공개 저장소 업로드 시 삭제 권장)
+const DEFAULT_API_KEY = 'AIzaSyCXl9anPpc8BfMz1jB3qj7b7ZTR31hp_h8'; 
 
 // AI Elements
 const aiLoading = document.getElementById('aiLoading');
@@ -23,7 +28,7 @@ let currentTopic = 'personality'; // 기본 탭을 성격으로 변경
 let fullAnalysisData = null; // 전체 분석 결과를 저장할 변수
 let currentSajuInfo = null; // 현재 사주 정보 캐시
 
-// (이전과 동일한 초기화 코드...)
+// Initialize Header Selects (1900 to 2100)
 for (let i = 1900; i <= 2100; i++) {
   const opt = document.createElement('option');
   opt.value = i;
@@ -36,6 +41,8 @@ for (let i = 1; i <= 12; i++) {
   opt.innerText = `${i}월`;
   monthSelectHeader.appendChild(opt);
 }
+
+// Initialize Time Selects
 for (let i = 0; i < 24; i++) {
   const opt = document.createElement('option');
   opt.value = i;
@@ -48,30 +55,6 @@ for (let i = 0; i < 60; i += 5) {
   opt.innerText = `${i}분`;
   minuteSelect.appendChild(opt);
 }
-
-const elementsMap = {
-  '甲': 'wood', '乙': 'wood', '寅': 'wood', '卯': 'wood',
-  '丙': 'fire', '丁': 'fire', '巳': 'fire', '午': 'fire',
-  '戊': 'earth', '己': 'earth', '辰': 'earth', '戌': 'earth', '丑': 'earth', '未': 'earth',
-  '庚': 'metal', '辛': 'metal', '申': 'metal', '酉': 'metal',
-  '壬': 'water', '癸': 'water', '亥': 'water', '子': 'water'
-};
-
-const elementsDesc = { 'wood': '나무(木)', 'fire': '불(火)', 'earth': '흙(土)', 'metal': '금(金)', 'water': '물(수)' };
-
-// 일간별 성격 정보
-const dayMasterInfo = {
-  '甲': { title: '갑목(甲木) - 숲속의 큰 나무', desc: '강직하고 진취적이며 우두머리 기질이 있습니다. 성실하고 책임감이 강하지만, 때로는 고집이 세고 융통성이 부족할 수 있습니다.' },
-  '乙': { title: '을목(乙木) - 유연한 꽃과 넝쿨', desc: '외유내강의 전형으로 환경 적응력이 뛰어납니다. 사교적이고 부드러우며 끈기가 있지만, 남에게 의지하려는 성향이 있을 수 있습니다.' },
-  '丙': { title: '병화(丙火) - 하늘의 태양', desc: '밝고 열정적이며 추진력이 대단합니다. 화끈하고 뒤끝이 없지만, 성격이 급하고 다소 독단적일 수 있습니다.' },
-  '丁': { title: '정화(丁火) - 따뜻한 등불과 촛불', desc: '예의 바르고 섬세하며 분석적인 면이 강합니다. 속정이 깊고 헌신적이지만, 생각이 많아 예민해지기 쉽습니다.' },
-  '戊': { title: '무토(戊土) - 믿음직한 태산', desc: '중심을 잘 잡고 포용력이 넓어 신뢰를 줍니다. 우직하고 듬직하지만, 변화를 싫어하고 다소 무뚝뚝할 수 있습니다.' },
-  '己': { title: '기토(己土) - 비옥한 전답', desc: '조용하고 현실적이며 어머니와 같은 자애로움이 있습니다. 성실하고 적응력이 좋으나, 우유부단하게 보일 수 있습니다.' },
-  '庚': { title: '경금(庚金) - 단단한 무쇠와 도끼', desc: '의리가 깊고 결단력이 강하며 불의를 참지 못합니다. 리더십이 뛰어나지만, 말투가 직설적이고 차가운 인상을 줄 수 있습니다.' },
-  '辛': { title: '신금(辛金) - 정교한 보석과 칼', desc: '섬세하고 깔끔하며 명예를 소중히 여깁니다. 자존심이 강하고 매사에 정확하지만, 다소 까다롭고 예민할 수 있습니다.' },
-  '壬': { title: '임수(壬水) - 깊고 넓은 바다', desc: '지혜롭고 포용력이 있으며 스케일이 큽니다. 유연하고 창의적이지만, 속을 알기 어렵고 변덕이 있을 수 있습니다.' },
-  '癸': { title: '계수(癸水) - 맑은 이슬과 빗물', desc: '상냥하고 영리하며 눈치가 빠릅니다. 주변 사람을 잘 챙기고 꼼꼼하지만, 마음이 여려 상처를 잘 받을 수 있습니다.' }
-};
 
 function renderCalendar() {
     const year = currentDate.getFullYear();
@@ -220,8 +203,6 @@ function displayTopicContent(topic) {
         return;
     }
     
-    // ... 나머지 로직 동일
-    
     const topicInfo = {
         job: { name: '직업운', pattern: '[\\*\\s]*직업( ?운)?' },
         love: { name: '연애운', pattern: '[\\*\\s]*연애( ?운)?' },
@@ -231,7 +212,6 @@ function displayTopicContent(topic) {
     const currentTopicInfo = topicInfo[topic];
     if (!currentTopicInfo) return;
 
-    // 정규식 설명: ### 뒤에 공백이나 별표(*)가 있을 수 있고, 주제명 뒤에도 별표가 있을 수 있음을 고려
     const regex = new RegExp(`(###\\s*${currentTopicInfo.pattern}[\\s\\S]*?)(?=(###|$))`);
     const match = fullAnalysisData.match(regex);
 
