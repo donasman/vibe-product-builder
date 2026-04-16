@@ -227,7 +227,13 @@ async function runAIAnalysis() {
         console.error(error);
         aiLoading.classList.add('hidden');
         aiResultArea.classList.remove('hidden');
-        aiContent.innerHTML = `<p style="color:red;">오류: ${error.message}</p>`;
+        aiContent.innerHTML = `
+            <div style="text-align: center; padding: 20px;">
+                <p style="color:red; margin-bottom: 20px;">분석 중 오류가 발생했습니다: ${error.message}</p>
+                <button id="retryBtn" class="confirm-btn" style="padding: 10px 20px; font-size: 0.9rem;">다시 시도하기</button>
+            </div>
+        `;
+        document.getElementById('retryBtn').onclick = runAIAnalysis;
         fullAnalysisData = null;
     } finally {
         otherTabs.forEach(btn => btn.disabled = false);
