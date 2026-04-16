@@ -221,15 +221,16 @@ function displayTopicContent(topic) {
     }
     
     const topicInfo = {
-        job: { name: '직업운', pattern: '직업( ?운)?' },
-        love: { name: '연애운', pattern: '연애( ?운)?' },
-        wealth: { name: '재물운', pattern: '재물( ?운)?' }
+        job: { name: '직업운', pattern: '[\\*\\s]*직업( ?운)?' },
+        love: { name: '연애운', pattern: '[\\*\\s]*연애( ?운)?' },
+        wealth: { name: '재물운', pattern: '[\\*\\s]*재물( ?운)?' }
     };
 
     const currentTopicInfo = topicInfo[topic];
     if (!currentTopicInfo) return;
 
-    const regex = new RegExp(`(###\s*${currentTopicInfo.pattern}[\s\S]*?)(?=(###|$))`);
+    // 정규식 설명: ### 뒤에 공백이나 별표(*)가 있을 수 있고, 주제명 뒤에도 별표가 있을 수 있음을 고려
+    const regex = new RegExp(`(###\\s*${currentTopicInfo.pattern}[\\s\\S]*?)(?=(###|$))`);
     const match = fullAnalysisData.match(regex);
 
     let contentToShow = '';
@@ -314,6 +315,7 @@ analysisTabs.addEventListener('click', (e) => {
             displayTopicContent(topic);
         }
     }
-});
+
+  });
 
 renderCalendar();
