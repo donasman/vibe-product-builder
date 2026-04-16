@@ -10,20 +10,11 @@ const minuteSelect = document.getElementById('minuteSelect');
 const resultContainer = document.getElementById('resultContainer');
 const sajuTextDisplay = document.getElementById('sajuText');
 
-// 기본 API 키 설정 (보안 주의: 공개 저장소 업로드 시 삭제 권장)
-const DEFAULT_API_KEY = 'AIzaSyCXl9anPpc8BfMz1jB3qj7b7ZTR31hp_h8'; 
-
 // AI Elements
 const aiAnalysisBtn = document.getElementById('aiAnalysisBtn');
 const aiLoading = document.getElementById('aiLoading');
 const aiResultArea = document.getElementById('aiResultArea');
 const aiContent = document.getElementById('aiContent');
-const settingsBtn = document.getElementById('settingsBtn');
-const settingsModal = document.getElementById('settingsModal');
-const apiKeyInput = document.getElementById('apiKeyInput');
-const modelSelect = document.getElementById('modelSelect');
-const saveKeyBtn = document.getElementById('saveKeyBtn');
-const closeModalBtn = document.getElementById('closeModalBtn');
 
 let currentDate = new Date();
 let selectedDate = null;
@@ -65,7 +56,7 @@ const elementsMap = {
   '壬': 'water', '癸': 'water', '亥': 'water', '子': 'water'
 };
 
-const elementsDesc = { 'wood': '나무(木)', 'fire': '불(火)', 'earth': '흙(土)', 'metal': '금(金)', 'water': '물(水)' };
+const elementsDesc = { 'wood': '나무(木)', 'fire': '불(火)', 'earth': '흙(土)', 'metal': '금(金)', 'water': '물(수)' };
 
 const dayMasterInfo = {
   '甲': { title: '갑목(甲木) - 숲속의 큰 나무', desc: '강직하고 진취적이며 우두머리 기질이 있습니다. 성실하고 책임감이 강하지만, 때로는 고집이 세고 융통성이 부족할 수 있습니다.' },
@@ -202,15 +193,9 @@ function calculateSaju() {
 }
 
 async function callGeminiAPI() {
-  // localStorage에 키가 없으면 DEFAULT_API_KEY를 사용합니다.
-  const apiKey = (localStorage.getItem('gemini_api_key') || DEFAULT_API_KEY || '').trim();
-  const selectedModel = localStorage.getItem('gemini_model') || 'gemini-2.5-flash';
+  const apiKey = 'AIzaSyCXl9anPpc8BfMz1jB3qj7b7ZTR31hp_h8';
+  const selectedModel = 'gemini-2.5-flash';
 
-  if (!apiKey || apiKey === '여기에_실제_API_키를_넣으세요') { 
-    alert("API 키가 설정되지 않았습니다. 설정(⚙️)에서 입력하거나 코드의 DEFAULT_API_KEY를 수정해주세요."); 
-    settingsModal.classList.remove('hidden'); 
-    return; 
-  }
   if (!currentPillars) return;
 
   aiLoading.classList.remove('hidden');
@@ -244,21 +229,6 @@ async function callGeminiAPI() {
     aiAnalysisBtn.disabled = false;
   }
 }
-
-// Settings Logic
-settingsBtn.onclick = () => {
-  // localStorage에 키가 없으면 코드에 설정된 기본 키를 보여줍니다.
-  apiKeyInput.value = localStorage.getItem('gemini_api_key') || (DEFAULT_API_KEY !== '여기에_실제_API_키를_넣으세요' ? DEFAULT_API_KEY : '');
-  modelSelect.value = localStorage.getItem('gemini_model') || 'gemini-2.5-flash';
-  settingsModal.classList.remove('hidden');
-};
-closeModalBtn.onclick = () => settingsModal.classList.add('hidden');
-saveKeyBtn.onclick = () => {
-  localStorage.setItem('gemini_api_key', apiKeyInput.value.trim());
-  localStorage.setItem('gemini_model', modelSelect.value);
-  alert("설정이 저장되었습니다.");
-  settingsModal.classList.add('hidden');
-};
 
 // Events
 yearSelectHeader.addEventListener('change', () => { currentDate.setFullYear(yearSelectHeader.value); renderCalendar(); });

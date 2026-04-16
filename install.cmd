@@ -31,6 +31,7 @@ exit /b 1
 
 :arch_valid
 
+
 REM Set constants
 set "GCS_BUCKET=https://storage.googleapis.com/claude-code-dist-86c565f3-f756-42ad-8dfa-d59b1c096819/claude-code-releases"
 set "DOWNLOAD_DIR=%USERPROFILE%\.claude\downloads"
