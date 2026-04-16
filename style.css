@@ -324,9 +324,6 @@ body {
   color: var(--primary);
 }
 
-.tab-btn.active {
-  color: var(--primary);
-}
 .tab-btn::after {
   content: '';
   position: absolute;
