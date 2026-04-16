@@ -217,14 +217,15 @@ function displayTopicContent(topic) {
   const currentTopicInfo = topicInfo[topic];
   if (!currentTopicInfo) return;
 
-  const regex = new RegExp(`(### ${currentTopicInfo.pattern}[\s\S]*?)(?=(###|$))`);
+  // MORE ROBUST REGEX: Look for ###, optional spaces, then the topic pattern.
+  const regex = new RegExp(`(###\s*${currentTopicInfo.pattern}[\s\S]*?)(?=(###|$))`);
   const match = fullAnalysisData.match(regex);
 
   let contentToShow = '';
   if (match && match[1]) {
     contentToShow = match[1].trim();
   } else {
-    // 해당 주제를 찾지 못했을 경우, 종합운이라면 전체 내용을 보여주고, 아니라면 오류 메시지 표시
+    // If no match, display an error (unless it's the general tab, then show all)
     if (topic === 'general') {
       contentToShow = fullAnalysisData;
     } else {
