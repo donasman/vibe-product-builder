@@ -203,8 +203,8 @@ body {
 /* Analysis Tabs */
 .analysis-tabs {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
   margin-bottom: 24px;
 }
 
@@ -325,6 +325,7 @@ body {
 }
 
 .tab-btn::after {
+  
   content: '';
   position: absolute;
   bottom: -1px;

@@ -199,7 +199,8 @@ function displayTopicContent(topic) {
     const topicInfo = {
         job: { name: '직업운', pattern: '[\\*\\s]*직업( ?운)?' },
         love: { name: '연애운', pattern: '[\\*\\s]*연애( ?운)?' },
-        wealth: { name: '재물운', pattern: '[\\*\\s]*재물( ?운)?' }
+        wealth: { name: '재물운', pattern: '[\\*\\s]*재물( ?운)?' },
+        remedy: { name: '보완할 점과 장소', pattern: '[\\*\\s]*보완할 점과 장소' }
     };
 
     const currentTopicInfo = topicInfo[topic];
