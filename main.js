@@ -208,10 +208,10 @@ function displayTopicContent(topic) {
   }
 
   const topicInfo = {
-    general: { name: '종합운', pattern: '종합 ?운' },
-    job:     { name: '직업운', pattern: '직업 ?운' },
-    love:    { name: '연애운', pattern: '연애 ?운' },
-    wealth:  { name: '재물운', pattern: '재물 ?운' }
+    general: { name: '종합운', pattern: '종합( ?운)?' },
+    job:     { name: '직업운', pattern: '직업( ?운)?' },
+    love:    { name: '연애운', pattern: '연애( ?운)?' },
+    wealth:  { name: '재물운', pattern: '재물( ?운)?' }
   };
   
   const currentTopicInfo = topicInfo[topic];
