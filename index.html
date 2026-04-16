@@ -77,8 +77,14 @@
       <div id="sajuText" class="saju-text"></div>
       
       <div class="interpretation-section">
-        <button id="aiAnalysisBtn" class="ai-btn">✨ AI 전문가 심층 감명 받기</button>
-        
+        <!-- AI 분석 탭 -->
+        <div class="analysis-tabs">
+          <button class="tab-btn active" data-topic="general">종합 분석</button>
+          <button class="tab-btn" data-topic="job">직업운</button>
+          <button class="tab-btn" data-topic="love">연애운</button>
+          <button class="tab-btn" data-topic="wealth">재물운</button>
+        </div>
+
         <!-- 로딩 -->
         <div id="aiLoading" class="ai-loading hidden">
           <div class="spinner"></div>
@@ -87,7 +93,6 @@
 
         <!-- AI 결과 -->
         <div id="aiResultArea" class="ai-result-area hidden">
-          <h4 style="color: var(--secondary); margin-bottom: 24px;">📜 AI 사주 분석 리포트</h4>
           <div id="aiContent" class="markdown-body"></div>
         </div>
 

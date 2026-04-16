@@ -11,14 +11,15 @@ const resultContainer = document.getElementById('resultContainer');
 const sajuTextDisplay = document.getElementById('sajuText');
 
 // AI Elements
-const aiAnalysisBtn = document.getElementById('aiAnalysisBtn');
 const aiLoading = document.getElementById('aiLoading');
 const aiResultArea = document.getElementById('aiResultArea');
 const aiContent = document.getElementById('aiContent');
+const analysisTabs = document.querySelector('.analysis-tabs');
 
 let currentDate = new Date();
 let selectedDate = null;
 let currentPillars = null;
+let currentTopic = 'general';
 
 // Initialize Header Selects (1900 to 2100)
 for (let i = 1900; i <= 2100; i++) {
@@ -187,23 +188,38 @@ function calculateSaju() {
     sajuTextDisplay.innerText = `${yearP}년 ${monthP}월 ${dayP}일 ${hourP}시`;
     
     resultContainer.classList.remove('hidden');
-    aiResultArea.classList.add('hidden'); 
     resultContainer.scrollIntoView({ behavior: 'smooth' });
+
+    // Reset tabs and trigger general analysis
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    const generalTab = document.querySelector('.tab-btn[data-topic="general"]');
+    generalTab.classList.add('active');
+    currentTopic = 'general';
+    callGeminiAPI(currentTopic); // Automatically call for "general" topic first
+
   } catch (error) { console.error("Saju error:", error); alert("계산 중 오류가 발생했습니다."); }
 }
 
-async function callGeminiAPI() {
+async function callGeminiAPI(topic) {
   const apiKey = 'AIzaSyCXl9anPpc8BfMz1jB3qj7b7ZTR31hp_h8';
-  const selectedModel = 'gemini-2.5-flash';
+  const selectedModel = 'gemini-2.5-flash'; // Reverted to user's preferred model
 
   if (!currentPillars) return;
 
   aiLoading.classList.remove('hidden');
-  aiAnalysisBtn.disabled = true;
+  analysisTabs.querySelectorAll('button').forEach(btn => btn.disabled = true);
   aiResultArea.classList.add('hidden');
 
+  const topicMap = {
+      'general': '성격, 직업운, 재물운, 연애운을 포함한 전반적인 사주',
+      'job': '직업운과 사회적 성취',
+      'love': '연애운과 결혼, 인간관계',
+      'wealth': '재물운과 경제적 흐름'
+  };
+  const topicDesc = topicMap[topic] || '전반적인 사주';
+
   const pillarText = currentPillars.map(p => p.data).join(' ');
-  const prompt = `너는 명리학 전문가야. 다음 사주 데이터를 바탕으로 성격, 직업운, 재물운을 상세히 풀이해줘. 마크다운 형식을 사용하고 한국어로 답변해줘.\n\n사주: ${pillarText}\n일시: ${sajuTextDisplay.innerText}`;
+  const prompt = `너는 현대적인 관점에서 사주를 해석하는 명리학 전문가야. 다음 사주 데이터를 바탕으로 사용자가 궁금해하는 주제인 '${topicDesc}'에 대해 상세히 풀이해줘. 마크다운 형식을 사용하고 한국어로 답변해줘. 답변은 친근하고 이해하기 쉽게 해줘.\n\n사주: ${pillarText}\n일시: ${sajuTextDisplay.innerText}`;
 
   try {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`;
@@ -213,20 +229,28 @@ async function callGeminiAPI() {
       body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
     });
 
-    if (!response.ok) throw new Error(`API 오류: ${response.status}`);
+    if (!response.ok) {
+        const errorData = await response.json();
+        console.error("API Error Details:", errorData);
+        throw new Error(`API 오류: ${response.status} - ${errorData.error?.message || '알 수 없는 오류'}`);
+    }
 
     const data = await response.json();
     if (data.candidates && data.candidates[0].content) {
       const markdownText = data.candidates[0].content.parts[0].text;
       aiContent.innerHTML = marked.parse(markdownText);
       aiResultArea.classList.remove('hidden');
-      aiResultArea.scrollIntoView({ behavior: 'smooth' });
+      aiResultArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+        throw new Error("API로부터 유효한 답변을 받지 못했습니다.");
     }
   } catch (error) {
-    alert(`오류가 발생했습니다: ${error.message}`);
+    console.error("Gemini API call failed:", error);
+    aiContent.innerHTML = `<p style="color:red;"><strong>오류가 발생했습니다:</strong> ${error.message}</p><p>잠시 후 다시 시도해주세요. 문제가 지속되면 관리자에게 문의하세요.</p>`;
+    aiResultArea.classList.remove('hidden');
   } finally {
     aiLoading.classList.add('hidden');
-    aiAnalysisBtn.disabled = false;
+    analysisTabs.querySelectorAll('button').forEach(btn => btn.disabled = false);
   }
 }
 
@@ -236,6 +260,18 @@ monthSelectHeader.addEventListener('change', () => { currentDate.setMonth(monthS
 prevMonthBtn.onclick = () => { currentDate.setMonth(currentDate.getMonth() - 1); renderCalendar(); };
 nextMonthBtn.onclick = () => { currentDate.setMonth(currentDate.getMonth() + 1); renderCalendar(); };
 confirmBtn.onclick = calculateSaju;
-aiAnalysisBtn.onclick = callGeminiAPI;
+
+// NEW: Tab event listener
+analysisTabs.addEventListener('click', (e) => {
+  if (e.target.tagName === 'BUTTON') {
+    const topic = e.target.dataset.topic;
+    if (topic !== currentTopic) {
+      currentTopic = topic;
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      e.target.classList.add('active');
+      callGeminiAPI(topic);
+    }
+  }
+});
 
 renderCalendar();
