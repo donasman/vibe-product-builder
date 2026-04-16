@@ -245,7 +245,7 @@ function displayTopicContent(topic) {
     aiContent.innerHTML = marked.parse(contentToShow);
 }
 
-async function getAIFullAnalysis() {
+async function getAIFullAnalysis(retries = 3, backoff = 2000) {
     const sajuInfo = sajuTextDisplay.innerText;
     currentSajuInfo = sajuInfo;
 
@@ -267,15 +267,23 @@ async function getAIFullAnalysis() {
 
     try {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`;
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-        });
+        
+        let response;
+        for (let i = 0; i < retries; i++) {
+            response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            });
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(`API 오류: ${response.status} - ${errorData.error?.message || '알 수 없는 오류'}`);
+            if (response.ok) break;
+            if (response.status === 503 && i < retries - 1) {
+                console.warn(`503 발생, ${backoff}ms 후 재시도 (${i + 1}/${retries})...`);
+                await new Promise(resolve => setTimeout(resolve, backoff));
+                backoff *= 2; // 지수 백오프
+                continue;
+            }
+            throw new Error(`API 오류: ${response.status}`);
         }
 
         const data = await response.json();
