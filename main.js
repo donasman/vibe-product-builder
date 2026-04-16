@@ -1,4 +1,5 @@
 import { elementsMap, elementsDesc, dayMasterInfo } from './data.js';
+import { fetchFullAnalysis } from './ai.js';
 
 const yearSelectHeader = document.getElementById('yearSelectHeader');
 const monthSelectHeader = document.getElementById('monthSelectHeader');
@@ -12,9 +13,6 @@ const minuteSelect = document.getElementById('minuteSelect');
 const resultContainer = document.getElementById('resultContainer');
 const sajuTextDisplay = document.getElementById('sajuText');
 
-// 기본 API 키 설정 (보안 주의: 공개 저장소 업로드 시 삭제 권장)
-const DEFAULT_API_KEY = 'AIzaSyCXl9anPpc8BfMz1jB3qj7b7ZTR31hp_h8'; 
-
 // AI Elements
 const aiLoading = document.getElementById('aiLoading');
 const aiResultArea = document.getElementById('aiResultArea');
@@ -24,11 +22,10 @@ const analysisTabs = document.querySelector('.analysis-tabs');
 let currentDate = new Date();
 let selectedDate = null;
 let currentPillars = null;
-let currentTopic = 'personality'; // 기본 탭을 성격으로 변경
-let fullAnalysisData = null; // 전체 분석 결과를 저장할 변수
-let currentSajuInfo = null; // 현재 사주 정보 캐시
+let currentTopic = 'personality'; 
+let fullAnalysisData = null; 
 
-// Initialize Header Selects (1900 to 2100)
+// (초기화 코드 동일)
 for (let i = 1900; i <= 2100; i++) {
   const opt = document.createElement('option');
   opt.value = i;
@@ -41,8 +38,6 @@ for (let i = 1; i <= 12; i++) {
   opt.innerText = `${i}월`;
   monthSelectHeader.appendChild(opt);
 }
-
-// Initialize Time Selects
 for (let i = 0; i < 24; i++) {
   const opt = document.createElement('option');
   opt.value = i;
@@ -168,7 +163,6 @@ function calculateSaju() {
         resultContainer.classList.remove('hidden');
         resultContainer.scrollIntoView({ behavior: 'smooth' });
 
-        // 로딩 초기화
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
         document.querySelector('.tab-btn[data-topic="personality"]').classList.add('active');
         currentTopic = 'personality';
@@ -177,14 +171,12 @@ function calculateSaju() {
         aiLoading.classList.remove('hidden');
         aiResultArea.classList.add('hidden');
         
-        // 데이터 가져오기 시작
-        getAIFullAnalysis();
+        runAIAnalysis();
 
     } catch (error) { console.error("Saju error:", error); alert("계산 중 오류가 발생했습니다."); }
 }
 
 function displayTopicContent(topic) {
-    // 데이터가 아직 없으면 로딩 표시
     if (!fullAnalysisData && topic !== 'personality') {
         aiLoading.classList.remove('hidden');
         aiResultArea.classList.add('hidden');
@@ -215,71 +207,22 @@ function displayTopicContent(topic) {
     const regex = new RegExp(`(###\\s*${currentTopicInfo.pattern}[\\s\\S]*?)(?=(###|$))`);
     const match = fullAnalysisData.match(regex);
 
-    let contentToShow = '';
-    if (match && match[1]) {
-        contentToShow = match[1].trim();
-    } else {
-        contentToShow = `### 오류\n'${currentTopicInfo.name}'에 대한 분석을 찾을 수 없습니다. AI가 아직 답변을 생성 중이거나, 내용을 분석하는 데 실패했습니다. 잠시 후 다시 시도해주세요.`;
-    }
-
-    aiContent.innerHTML = marked.parse(contentToShow);
+    aiContent.innerHTML = match && match[1] ? marked.parse(match[1].trim()) : `### 오류\n'${currentTopicInfo.name}' 분석을 찾을 수 없습니다.`;
 }
 
-async function getAIFullAnalysis(retries = 3, backoff = 2000) {
+async function runAIAnalysis() {
+    const pillarText = currentPillars.map(p => p.data).join(' ');
     const sajuInfo = sajuTextDisplay.innerText;
-    currentSajuInfo = sajuInfo;
-
-    const apiKey = 'AIzaSyCXl9anPpc8BfMz1jB3qj7b7ZTR31hp_h8';
-    const selectedModel = 'gemini-2.5-flash';
-
-    if (!currentPillars) return;
-
+    
     const otherTabs = analysisTabs.querySelectorAll('button:not([data-topic="personality"])');
     otherTabs.forEach(btn => btn.disabled = true);
 
-    const pillarText = currentPillars.map(p => p.data).join(' ');
-    const prompt = `너는 현대적인 관점에서 사주를 해석하는 명리학 전문가야. 다음 사주 데이터를 바탕으로, 아래 각 주제에 대해 상세하게 풀이해줘.
-각 주제는 반드시 다음 형식을 따라서 '### 주제명'으로 시작해야해: '### 직업운', '### 연애운', '### 재물운'.
-답변은 마크다운 형식의 한국어로, 친근하고 이해하기 쉽게 작성해줘.
-
-사주: ${pillarText}
-일시: ${sajuTextDisplay.innerText}`;
-
     try {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`;
-        
-        let response;
-        for (let i = 0; i < retries; i++) {
-            response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-            });
-
-            if (response.ok) break;
-            if (response.status === 503 && i < retries - 1) {
-                console.warn(`503 발생, ${backoff}ms 후 재시도 (${i + 1}/${retries})...`);
-                await new Promise(resolve => setTimeout(resolve, backoff));
-                backoff *= 2; // 지수 백오프
-                continue;
-            }
-            throw new Error(`API 오류: ${response.status}`);
-        }
-
-        const data = await response.json();
-        if (data.candidates && data.candidates[0].content) {
-            fullAnalysisData = data.candidates[0].content.parts[0].text;
-            if (currentTopic !== 'personality') {
-                displayTopicContent(currentTopic);
-            }
-        } else {
-            throw new Error("API로부터 유효한 답변을 받지 못했습니다.");
-        }
+        fullAnalysisData = await fetchFullAnalysis(pillarText, sajuInfo);
+        if (currentTopic !== 'personality') displayTopicContent(currentTopic);
     } catch (error) {
-        console.error("Gemini API call failed:", error);
-        if (currentTopic !== 'personality') {
-            aiContent.innerHTML = `<p style="color:red;"><strong>오류가 발생했습니다:</strong> ${error.message}</p><p>잠시 후 다시 시도해주세요.</p>`;
-        }
+        console.error(error);
+        if (currentTopic !== 'personality') aiContent.innerHTML = `<p style="color:red;">오류: ${error.message}</p>`;
         fullAnalysisData = null;
     } finally {
         aiLoading.classList.add('hidden');
@@ -287,8 +230,7 @@ async function getAIFullAnalysis(retries = 3, backoff = 2000) {
     }
 }
 
-
-// --- 이벤트 리스너 --- //
+// 이벤트 리스너...
 yearSelectHeader.addEventListener('change', () => { currentDate.setFullYear(yearSelectHeader.value); renderCalendar(); });
 monthSelectHeader.addEventListener('change', () => { currentDate.setMonth(monthSelectHeader.value); renderCalendar(); });
 prevMonthBtn.onclick = () => { currentDate.setMonth(currentDate.getMonth() - 1); renderCalendar(); };
@@ -305,7 +247,6 @@ analysisTabs.addEventListener('click', (e) => {
             displayTopicContent(topic);
         }
     }
-
-  });
+});
 
 renderCalendar();
