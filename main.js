@@ -20,8 +20,10 @@ let currentDate = new Date();
 let selectedDate = null;
 let currentPillars = null;
 let currentTopic = 'general';
+let fullAnalysisData = null; // 전체 분석 결과를 저장할 변수
+let currentSajuInfo = null; // 현재 사주 정보 캐시
 
-// Initialize Header Selects (1900 to 2100)
+// (이전과 동일한 초기화 코드...)
 for (let i = 1900; i <= 2100; i++) {
   const opt = document.createElement('option');
   opt.value = i;
@@ -34,8 +36,6 @@ for (let i = 1; i <= 12; i++) {
   opt.innerText = `${i}월`;
   monthSelectHeader.appendChild(opt);
 }
-
-// Initialize Time Selects
 for (let i = 0; i < 24; i++) {
   const opt = document.createElement('option');
   opt.value = i;
@@ -156,7 +156,6 @@ function updateInterpretation(pillars) {
     `;
     statsContainer.appendChild(row);
     
-    // Trigger animation
     setTimeout(() => {
       row.querySelector('.stat-bar-fill').style.width = `${percentage}%`;
     }, 100);
@@ -190,19 +189,64 @@ function calculateSaju() {
     resultContainer.classList.remove('hidden');
     resultContainer.scrollIntoView({ behavior: 'smooth' });
 
-    // Reset tabs and trigger general analysis
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     const generalTab = document.querySelector('.tab-btn[data-topic="general"]');
     generalTab.classList.add('active');
     currentTopic = 'general';
-    callGeminiAPI(currentTopic); // Automatically call for "general" topic first
+    fullAnalysisData = null;
+    
+    getAIFullAnalysis();
 
   } catch (error) { console.error("Saju error:", error); alert("계산 중 오류가 발생했습니다."); }
 }
 
-async function callGeminiAPI(topic) {
+// 저장된 전체 분석 데이터에서 특정 주제에 해당하는 내용을 파싱하여 보여주는 함수
+function displayTopicContent(topic) {
+  if (!fullAnalysisData) {
+    aiContent.innerHTML = "<p>아직 분석 데이터가 없습니다. AI 분석을 먼저 실행해주세요.</p>";
+    return;
+  }
+
+  const topicMap = {
+    general: '종합운',
+    job: '직업운',
+    love: '연애운',
+    wealth: '재물운'
+  };
+  const heading = topicMap[topic];
+  if (!heading) return;
+
+  // 정규표현식을 사용하여 해당 주제의 내용만 추출 (### 헤딩부터 다음 ### 헤딩 전까지)
+  const regex = new RegExp(`(### ${heading}[\s\S]*?)(?=(###|$))`);
+  const match = fullAnalysisData.match(regex);
+
+  let contentToShow = '';
+  if (match && match[1]) {
+    contentToShow = match[1].trim();
+  } else {
+    // 해당 주제를 찾지 못했을 경우, 종합운이라면 전체 내용을 보여주고, 아니라면 오류 메시지 표시
+    if (topic === 'general') {
+      contentToShow = fullAnalysisData;
+    } else {
+      contentToShow = `### 오류\n'${heading}'에 대한 분석을 찾을 수 없습니다. 종합 분석 내용을 확인해주세요.`
+    }
+  }
+
+  aiContent.innerHTML = marked.parse(contentToShow);
+  aiResultArea.classList.remove('hidden');
+}
+
+// 모든 주제에 대한 AI 분석을 한 번에 요청하는 함수
+async function getAIFullAnalysis() {
+  const sajuInfo = sajuTextDisplay.innerText;
+  if (fullAnalysisData && currentSajuInfo === sajuInfo) {
+    displayTopicContent(currentTopic);
+    return;
+  }
+  currentSajuInfo = sajuInfo;
+
   const apiKey = 'AIzaSyCXl9anPpc8BfMz1jB3qj7b7ZTR31hp_h8';
-  const selectedModel = 'gemini-2.5-flash'; // Reverted to user's preferred model
+  const selectedModel = 'gemini-2.5-flash';
 
   if (!currentPillars) return;
 
@@ -210,16 +254,13 @@ async function callGeminiAPI(topic) {
   analysisTabs.querySelectorAll('button').forEach(btn => btn.disabled = true);
   aiResultArea.classList.add('hidden');
 
-  const topicMap = {
-      'general': '성격, 직업운, 재물운, 연애운을 포함한 전반적인 사주',
-      'job': '직업운과 사회적 성취',
-      'love': '연애운과 결혼, 인간관계',
-      'wealth': '재물운과 경제적 흐름'
-  };
-  const topicDesc = topicMap[topic] || '전반적인 사주';
-
   const pillarText = currentPillars.map(p => p.data).join(' ');
-  const prompt = `너는 현대적인 관점에서 사주를 해석하는 명리학 전문가야. 다음 사주 데이터를 바탕으로 사용자가 궁금해하는 주제인 '${topicDesc}'에 대해 상세히 풀이해줘. 마크다운 형식을 사용하고 한국어로 답변해줘. 답변은 친근하고 이해하기 쉽게 해줘.\n\n사주: ${pillarText}\n일시: ${sajuTextDisplay.innerText}`;
+  const prompt = `너는 현대적인 관점에서 사주를 해석하는 명리학 전문가야. 다음 사주 데이터를 바탕으로, 아래 각 주제에 대해 상세하게 풀이해줘.
+각 주제는 반드시 다음 형식을 따라서 '### 주제명'으로 시작해야해: '### 종합운', '### 직업운', '### 연애운', '### 재물운'.
+답변은 마크다운 형식의 한국어로, 친근하고 이해하기 쉽게 작성해줘.
+
+사주: ${pillarText}
+일시: ${sajuTextDisplay.innerText}`;
 
   try {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`;
@@ -230,38 +271,37 @@ async function callGeminiAPI(topic) {
     });
 
     if (!response.ok) {
-        const errorData = await response.json();
-        console.error("API Error Details:", errorData);
-        throw new Error(`API 오류: ${response.status} - ${errorData.error?.message || '알 수 없는 오류'}`);
+      const errorData = await response.json();
+      throw new Error(`API 오류: ${response.status} - ${errorData.error?.message || '알 수 없는 오류'}`);
     }
 
     const data = await response.json();
     if (data.candidates && data.candidates[0].content) {
-      const markdownText = data.candidates[0].content.parts[0].text;
-      aiContent.innerHTML = marked.parse(markdownText);
-      aiResultArea.classList.remove('hidden');
-      aiResultArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      fullAnalysisData = data.candidates[0].content.parts[0].text; // 전체 결과 저장
+      displayTopicContent(currentTopic); // 현재 활성화된 탭(종합) 내용 표시
     } else {
-        throw new Error("API로부터 유효한 답변을 받지 못했습니다.");
+      throw new Error("API로부터 유효한 답변을 받지 못했습니다.");
     }
   } catch (error) {
     console.error("Gemini API call failed:", error);
-    aiContent.innerHTML = `<p style="color:red;"><strong>오류가 발생했습니다:</strong> ${error.message}</p><p>잠시 후 다시 시도해주세요. 문제가 지속되면 관리자에게 문의하세요.</p>`;
+    aiContent.innerHTML = `<p style="color:red;"><strong>오류가 발생했습니다:</strong> ${error.message}</p><p>잠시 후 다시 시도해주세요.</p>`;
     aiResultArea.classList.remove('hidden');
+    fullAnalysisData = null;
   } finally {
     aiLoading.classList.add('hidden');
     analysisTabs.querySelectorAll('button').forEach(btn => btn.disabled = false);
   }
 }
 
-// Events
+// --- 이벤트 리스너 --- //
+
 yearSelectHeader.addEventListener('change', () => { currentDate.setFullYear(yearSelectHeader.value); renderCalendar(); });
 monthSelectHeader.addEventListener('change', () => { currentDate.setMonth(monthSelectHeader.value); renderCalendar(); });
 prevMonthBtn.onclick = () => { currentDate.setMonth(currentDate.getMonth() - 1); renderCalendar(); };
 nextMonthBtn.onclick = () => { currentDate.setMonth(currentDate.getMonth() + 1); renderCalendar(); };
 confirmBtn.onclick = calculateSaju;
 
-// NEW: Tab event listener
+// 탭 클릭 이벤트 (API 호출 없이 내용만 변경)
 analysisTabs.addEventListener('click', (e) => {
   if (e.target.tagName === 'BUTTON') {
     const topic = e.target.dataset.topic;
@@ -269,7 +309,8 @@ analysisTabs.addEventListener('click', (e) => {
       currentTopic = topic;
       document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
       e.target.classList.add('active');
-      callGeminiAPI(topic);
+      
+      displayTopicContent(topic);
     }
   }
 });
