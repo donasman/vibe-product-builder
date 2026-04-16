@@ -10,6 +10,9 @@ const minuteSelect = document.getElementById('minuteSelect');
 const resultContainer = document.getElementById('resultContainer');
 const sajuTextDisplay = document.getElementById('sajuText');
 
+// 기본 API 키 설정 (보안 주의: 공개 저장소 업로드 시 삭제 권장)
+const DEFAULT_API_KEY = 'AIzaSyCXl9anPpc8BfMz1jB3qj7b7ZTR31hp_h8'; 
+
 // AI Elements
 const aiAnalysisBtn = document.getElementById('aiAnalysisBtn');
 const aiLoading = document.getElementById('aiLoading');
@@ -199,10 +202,15 @@ function calculateSaju() {
 }
 
 async function callGeminiAPI() {
-  const apiKey = (localStorage.getItem('gemini_api_key') || '').trim();
+  // localStorage에 키가 없으면 DEFAULT_API_KEY를 사용합니다.
+  const apiKey = (localStorage.getItem('gemini_api_key') || DEFAULT_API_KEY || '').trim();
   const selectedModel = localStorage.getItem('gemini_model') || 'gemini-2.5-flash';
 
-  if (!apiKey) { alert("설정(⚙️)에서 API 키를 먼저 입력해주세요."); settingsModal.classList.remove('hidden'); return; }
+  if (!apiKey || apiKey === '여기에_실제_API_키를_넣으세요') { 
+    alert("API 키가 설정되지 않았습니다. 설정(⚙️)에서 입력하거나 코드의 DEFAULT_API_KEY를 수정해주세요."); 
+    settingsModal.classList.remove('hidden'); 
+    return; 
+  }
   if (!currentPillars) return;
 
   aiLoading.classList.remove('hidden');
@@ -239,7 +247,8 @@ async function callGeminiAPI() {
 
 // Settings Logic
 settingsBtn.onclick = () => {
-  apiKeyInput.value = localStorage.getItem('gemini_api_key') || '';
+  // localStorage에 키가 없으면 코드에 설정된 기본 키를 보여줍니다.
+  apiKeyInput.value = localStorage.getItem('gemini_api_key') || (DEFAULT_API_KEY !== '여기에_실제_API_키를_넣으세요' ? DEFAULT_API_KEY : '');
   modelSelect.value = localStorage.getItem('gemini_model') || 'gemini-2.5-flash';
   settingsModal.classList.remove('hidden');
 };
