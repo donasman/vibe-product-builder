@@ -207,17 +207,17 @@ function displayTopicContent(topic) {
     return;
   }
 
-  const topicMap = {
-    general: '종합운',
-    job: '직업운',
-    love: '연애운',
-    wealth: '재물운'
+  const topicInfo = {
+    general: { name: '종합운', pattern: '종합 ?운' },
+    job:     { name: '직업운', pattern: '직업 ?운' },
+    love:    { name: '연애운', pattern: '연애 ?운' },
+    wealth:  { name: '재물운', pattern: '재물 ?운' }
   };
-  const heading = topicMap[topic];
-  if (!heading) return;
+  
+  const currentTopicInfo = topicInfo[topic];
+  if (!currentTopicInfo) return;
 
-  // 정규표현식을 사용하여 해당 주제의 내용만 추출 (### 헤딩부터 다음 ### 헤딩 전까지)
-  const regex = new RegExp(`(### ${heading}[\s\S]*?)(?=(###|$))`);
+  const regex = new RegExp(`(### ${currentTopicInfo.pattern}[\s\S]*?)(?=(###|$))`);
   const match = fullAnalysisData.match(regex);
 
   let contentToShow = '';
@@ -228,7 +228,7 @@ function displayTopicContent(topic) {
     if (topic === 'general') {
       contentToShow = fullAnalysisData;
     } else {
-      contentToShow = `### 오류\n'${heading}'에 대한 분석을 찾을 수 없습니다. 종합 분석 내용을 확인해주세요.`
+      contentToShow = `### 오류\n'${currentTopicInfo.name}'에 대한 분석을 찾을 수 없습니다. 종합 분석 내용을 확인해주세요.`
     }
   }
 
