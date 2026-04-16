@@ -19,22 +19,30 @@ export async function fetchFullAnalysis(pillarText, sajuInfo, retries = 3, backo
 
   let response;
   for (let i = 0; i < retries; i++) {
-    response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
-      signal
-    });
+    try {
+      response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+        signal
+      });
 
-    if (response.ok) break;
-    if (response.status === 503 && i < retries - 1) {
+      if (response.ok) break;
+      if (response.status === 503 && i < retries - 1) {
+        await new Promise(resolve => setTimeout(resolve, backoff));
+        backoff *= 2;
+        continue;
+      }
+      throw new Error(`API 오류: ${response.status}`);
+    } catch (e) {
+      if (i === retries - 1) throw e;
       await new Promise(resolve => setTimeout(resolve, backoff));
       backoff *= 2;
-      continue;
     }
-    throw new Error(`API 오류: ${response.status}`);
   }
 
+  if (!response) throw new Error("API로부터 응답을 받지 못했습니다.");
+  
   const data = await response.json();
   if (!data.candidates || !data.candidates[0].content) {
     throw new Error("API로부터 유효한 답변을 받지 못했습니다.");
