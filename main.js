@@ -18,6 +18,7 @@ const aiContent = document.getElementById('aiContent');
 const settingsBtn = document.getElementById('settingsBtn');
 const settingsModal = document.getElementById('settingsModal');
 const apiKeyInput = document.getElementById('apiKeyInput');
+const modelSelect = document.getElementById('modelSelect');
 const saveKeyBtn = document.getElementById('saveKeyBtn');
 const closeModalBtn = document.getElementById('closeModalBtn');
 
@@ -61,13 +62,30 @@ const elementsMap = {
   '壬': 'water', '癸': 'water', '亥': 'water', '子': 'water'
 };
 
+const elementsDesc = { 'wood': '나무(木)', 'fire': '불(火)', 'earth': '흙(土)', 'metal': '금(金)', 'water': '물(水)' };
+
+const dayMasterInfo = {
+  '甲': { title: '갑목(甲木) - 숲속의 큰 나무', desc: '강직하고 진취적이며 우두머리 기질이 있습니다. 성실하고 책임감이 강하지만, 때로는 고집이 세고 융통성이 부족할 수 있습니다.' },
+  '乙': { title: '을목(乙木) - 유연한 꽃과 넝쿨', desc: '외유내강의 전형으로 환경 적응력이 뛰어납니다. 사교적이고 부드러우며 끈기가 있지만, 남에게 의지하려는 성향이 있을 수 있습니다.' },
+  '丙': { title: '병화(丙火) - 하늘의 태양', desc: '밝고 열정적이며 추진력이 대단합니다. 화끈하고 뒤끝이 없지만, 성격이 급하고 다소 독단적일 수 있습니다.' },
+  '丁': { title: '정화(丁火) - 따뜻한 등불과 촛불', desc: '예의 바르고 섬세하며 분석적인 면이 강합니다. 속정이 깊고 헌신적이지만, 생각이 많아 예민해지기 쉽습니다.' },
+  '戊': { title: '무토(戊土) - 믿음직한 태산', desc: '중심을 잘 잡고 포용력이 넓어 신뢰를 줍니다. 우직하고 듬직하지만, 변화를 싫어하고 다소 무뚝뚝할 수 있습니다.' },
+  '己': { title: '기토(己土) - 비옥한 전답', desc: '조용하고 현실적이며 어머니와 같은 자애로움이 있습니다. 성실하고 적응력이 좋으나, 우유부단하게 보일 수 있습니다.' },
+  '庚': { title: '경금(庚金) - 단단한 무쇠와 도끼', desc: '의리가 깊고 결단력이 강하며 불의를 참지 못합니다. 리더십이 뛰어나지만, 말투가 직설적이고 차가운 인상을 줄 수 있습니다.' },
+  '辛': { title: '신금(辛金) - 정교한 보석과 칼', desc: '섬세하고 깔끔하며 명예를 소중히 여깁니다. 자존심이 강하고 매사에 정확하지만, 다소 까다롭고 예민할 수 있습니다.' },
+  '壬': { title: '임수(壬水) - 깊고 넓은 바다', desc: '지혜롭고 포용력이 있으며 스케일이 큽니다. 유연하고 창의적이지만, 속을 알기 어렵고 변덕이 있을 수 있습니다.' },
+  '癸': { title: '계수(癸水) - 맑은 이슬과 빗물', desc: '상냥하고 영리하며 눈치가 빠릅니다. 주변 사람을 잘 챙기고 꼼꼼하지만, 마음이 여려 상처를 잘 받을 수 있습니다.' }
+};
+
 function renderCalendar() {
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
   yearSelectHeader.value = year;
   monthSelectHeader.value = month;
+  
   const firstDayOfMonth = new Date(year, month, 1).getDay();
   const lastDateOfMonth = new Date(year, month + 1, 0).getDate();
+  
   calendarDays.innerHTML = "";
   for (let i = 0; i < firstDayOfMonth; i++) {
     const dayDiv = document.createElement("div");
@@ -110,27 +128,8 @@ function getPillar(eightChar, lunar, type) {
   if (typeof eightChar[ganMethod] === 'function' && typeof eightChar[zhiMethod] === 'function') {
     return eightChar[ganMethod]() + eightChar[zhiMethod]();
   }
-  const lunarMethods = [`get${type}InGanZhi`, `get${type}GanZhi`, type === 'Hour' ? 'getTimeInGanZhi' : null].filter(Boolean);
-  for (let m of lunarMethods) {
-    if (typeof lunar[m] === 'function') return lunar[m]();
-  }
   return "??";
 }
-
-const dayMasterInfo = {
-  '甲': { title: '갑목(甲木) - 숲속의 큰 나무', desc: '강직하고 진취적이며 우두머리 기질이 있습니다. 성실하고 책임감이 강하지만, 때로는 고집이 세고 융통성이 부족할 수 있습니다.' },
-  '乙': { title: '을목(乙木) - 유연한 꽃과 넝쿨', desc: '외유내강의 전형으로 환경 적응력이 뛰어납니다. 사교적이고 부드러우며 끈기가 있지만, 남에게 의지하려는 성향이 있을 수 있습니다.' },
-  '丙': { title: '병화(丙火) - 하늘의 태양', desc: '밝고 열정적이며 추진력이 대단합니다. 화끈하고 뒤끝이 없지만, 성격이 급하고 다소 독단적일 수 있습니다.' },
-  '丁': { title: '정화(丁火) - 따뜻한 등불과 촛불', desc: '예의 바르고 섬세하며 분석적인 면이 강합니다. 속정이 깊고 헌신적이지만, 생각이 많아 예민해지기 쉽습니다.' },
-  '戊': { title: '무토(戊土) - 믿음직한 태산', desc: '중심을 잘 잡고 포용력이 넓어 신뢰를 줍니다. 우직하고 듬직하지만, 변화를 싫어하고 다소 무뚝뚝할 수 있습니다.' },
-  '己': { title: '기토(己土) - 비옥한 전답', desc: '조용하고 현실적이며 어머니와 같은 자애로움이 있습니다. 성실하고 적응력이 좋으나, 우유부단하게 보일 수 있습니다.' },
-  '庚': { title: '경금(庚金) - 단단한 무쇠와 도끼', desc: '의리가 깊고 결단력이 강하며 불의를 참지 못합니다. 리더십이 뛰어나지만, 말투가 직설적이고 차가운 인상을 줄 수 있습니다.' },
-  '辛': { title: '신금(辛金) - 정교한 보석과 칼', desc: '섬세하고 깔끔하며 명예를 소중히 여깁니다. 자존심이 강하고 매사에 정확하지만, 다소 까다롭고 예민할 수 있습니다.' },
-  '壬': { title: '임수(壬水) - 깊고 넓은 바다', desc: '지혜롭고 포용력이 있으며 스케일이 큽니다. 유연하고 창의적이지만, 속을 알기 어렵고 변덕이 있을 수 있습니다.' },
-  '癸': { title: '계수(癸水) - 맑은 이슬과 빗물', desc: '상냥하고 영리하며 눈치가 빠릅니다. 주변 사람을 잘 챙기고 꼼꼼하지만, 마음이 여려 상처를 잘 받을 수 있습니다.' }
-};
-
-const elementsDesc = { 'wood': '나무(木)', 'fire': '불(火)', 'earth': '흙(土)', 'metal': '금(金)', 'water': '물(水)' };
 
 function updateInterpretation(pillars) {
   const elementsCount = { 'wood': 0, 'fire': 0, 'earth': 0, 'metal': 0, 'water': 0 };
@@ -140,29 +139,47 @@ function updateInterpretation(pillars) {
     if (elementsMap[stem]) elementsCount[elementsMap[stem]]++;
     if (elementsMap[branch]) elementsCount[elementsMap[branch]]++;
   });
+  
   const dayMaster = pillars.find(p => p.id === 'dayPillar').data.substring(0, 1);
   const info = dayMasterInfo[dayMaster] || { title: '분석 불가', desc: '정확한 정보를 불러올 수 없습니다.' };
-  document.getElementById('dayMasterTitle').innerText = `나의 성향: ${info.title}`;
+  document.getElementById('dayMasterTitle').innerText = info.title;
   document.getElementById('personalityText').innerText = info.desc;
+  
   const statsContainer = document.getElementById('elementsStats');
   statsContainer.innerHTML = '';
+  
   Object.keys(elementsCount).forEach(key => {
     const count = elementsCount[key], percentage = (count / 8) * 100;
     const row = document.createElement('div');
     row.className = 'stat-row';
-    row.innerHTML = `<div class="stat-label">${elementsDesc[key]}</div><div class="stat-bar-bg"><div class="stat-bar-fill" style="width: ${percentage}%; background-color: var(--${key})"></div></div><div class="stat-count">${count}</div>`;
+    row.innerHTML = `
+      <div class="stat-label">${elementsDesc[key]}</div>
+      <div class="stat-bar-bg">
+        <div class="stat-bar-fill" style="width: 0; background-color: var(--${key})"></div>
+      </div>
+      <div class="stat-count">${count}</div>
+    `;
     statsContainer.appendChild(row);
+    
+    // Trigger animation
+    setTimeout(() => {
+      row.querySelector('.stat-bar-fill').style.width = `${percentage}%`;
+    }, 100);
   });
 }
 
 function calculateSaju() {
   if (!selectedDate) return;
   const year = selectedDate.getFullYear(), month = selectedDate.getMonth() + 1, day = selectedDate.getDate(), hour = parseInt(hourSelect.value), minute = parseInt(minuteSelect.value);
+  
   if (typeof Solar === 'undefined') { alert("라이브러리를 불러오는 중입니다. 잠시 후 다시 시도해주세요."); return; }
+  
   try {
     const solar = Solar.fromYmdHms(year, month, day, hour, minute, 0), lunar = solar.getLunar(), eightChar = lunar.getEightChar();
     const yearP = getPillar(eightChar, lunar, 'Year'), monthP = getPillar(eightChar, lunar, 'Month'), dayP = getPillar(eightChar, lunar, 'Day'), hourP = getPillar(eightChar, lunar, 'Hour');
+    
     currentPillars = [{ id: 'yearPillar', data: yearP }, { id: 'monthPillar', data: monthP }, { id: 'dayPillar', data: dayP }, { id: 'hourPillar', data: hourP }];
+    
     currentPillars.forEach(p => {
       const el = document.getElementById(p.id);
       if (!el || !p.data) return;
@@ -171,19 +188,21 @@ function calculateSaju() {
       if (stemDiv) { stemDiv.innerText = stem; stemDiv.className = `stem ${elementsMap[stem] || ''}`; }
       if (branchDiv) { branchDiv.innerText = branch; branchDiv.className = `branch ${elementsMap[branch] || ''}`; }
     });
+    
     updateInterpretation(currentPillars);
     sajuTextDisplay.innerText = `${yearP}년 ${monthP}월 ${dayP}일 ${hourP}시`;
+    
     resultContainer.classList.remove('hidden');
-    aiResultArea.classList.add('hidden'); // Reset AI area
+    aiResultArea.classList.add('hidden'); 
     resultContainer.scrollIntoView({ behavior: 'smooth' });
   } catch (error) { console.error("Saju error:", error); alert("계산 중 오류가 발생했습니다."); }
 }
 
 async function callGeminiAPI() {
-  let apiKey = localStorage.getItem('gemini_api_key');
-  if (apiKey) apiKey = apiKey.trim(); // 공백 제거
+  const apiKey = (localStorage.getItem('gemini_api_key') || '').trim();
+  const selectedModel = localStorage.getItem('gemini_model') || 'gemini-2.5-flash';
 
-  if (!apiKey) { alert("먼저 설정(⚙️)에서 Gemini API 키를 입력해주세요."); settingsModal.classList.remove('hidden'); return; }
+  if (!apiKey) { alert("설정(⚙️)에서 API 키를 먼저 입력해주세요."); settingsModal.classList.remove('hidden'); return; }
   if (!currentPillars) return;
 
   aiLoading.classList.remove('hidden');
@@ -191,52 +210,37 @@ async function callGeminiAPI() {
   aiResultArea.classList.add('hidden');
 
   const pillarText = currentPillars.map(p => p.data).join(' ');
-  const prompt = `너는 30년 경력의 대한민국 최고의 명리학 전문가야. 다음 사주팔자 데이터를 바탕으로 이 사람의 타고난 성격, 직업운, 재물운, 그리고 인생의 조언을 아주 상세하고 전문적으로 풀이해줘. 답변은 한국어로 작성하고 마크다운 형식을 사용해줘.\n\n사주 데이터: ${pillarText}\n태어난 일시: ${sajuTextDisplay.innerText}`;
+  const prompt = `너는 명리학 전문가야. 다음 사주 데이터를 바탕으로 성격, 직업운, 재물운을 상세히 풀이해줘. 마크다운 형식을 사용하고 한국어로 답변해줘.\n\n사주: ${pillarText}\n일시: ${sajuTextDisplay.innerText}`;
 
   try {
-    // 2026년 기준 신규 사용자에게 권장되는 최신 안정화 모델인 gemini-2.5-flash 사용
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-    
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`;
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      const errorMsg = errorData.error?.message || "API 호출 실패";
-      
-      if (response.status === 429) {
-        throw new Error("현재 API 키의 할당량이 0입니다. 구글 서버에 키가 등록되는 데 시간이 걸릴 수 있습니다. 10분 정도 뒤에 다시 시도하시거나, 다른 구글 계정으로 새 키를 발급받아보세요.");
-      }
-      
-      throw new Error(`[${response.status}] ${errorMsg}`);
-    }
+    if (!response.ok) throw new Error(`API 오류: ${response.status}`);
 
     const data = await response.json();
-    if (data.candidates && data.candidates[0].content && data.candidates[0].content.parts[0].text) {
+    if (data.candidates && data.candidates[0].content) {
       const markdownText = data.candidates[0].content.parts[0].text;
       aiContent.innerHTML = marked.parse(markdownText);
       aiResultArea.classList.remove('hidden');
       aiResultArea.scrollIntoView({ behavior: 'smooth' });
-    } else {
-      throw new Error("AI 답변을 생성할 수 없는 사주입니다. (안전 필터에 의해 차단되었을 수 있습니다)");
     }
   } catch (error) {
-    console.error("AI Error:", error);
-    alert(`AI 분석 오류: ${error.message}`);
+    alert(`오류가 발생했습니다: ${error.message}`);
   } finally {
     aiLoading.classList.add('hidden');
     aiAnalysisBtn.disabled = false;
   }
 }
 
-// Settings Modal Logic
-const modelSelect = document.getElementById('modelSelect');
+// Settings Logic
 settingsBtn.onclick = () => {
   apiKeyInput.value = localStorage.getItem('gemini_api_key') || '';
-  modelSelect.value = localStorage.getItem('gemini_model') || 'gemini-1.5-flash';
+  modelSelect.value = localStorage.getItem('gemini_model') || 'gemini-2.5-flash';
   settingsModal.classList.remove('hidden');
 };
 closeModalBtn.onclick = () => settingsModal.classList.add('hidden');
@@ -247,7 +251,7 @@ saveKeyBtn.onclick = () => {
   settingsModal.classList.add('hidden');
 };
 
-// Calendar Event Listeners
+// Events
 yearSelectHeader.addEventListener('change', () => { currentDate.setFullYear(yearSelectHeader.value); renderCalendar(); });
 monthSelectHeader.addEventListener('change', () => { currentDate.setMonth(monthSelectHeader.value); renderCalendar(); });
 prevMonthBtn.onclick = () => { currentDate.setMonth(currentDate.getMonth() - 1); renderCalendar(); };
