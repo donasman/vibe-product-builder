@@ -14,7 +14,8 @@ export const createPrompt = (pillarText, sajuInfo) => {
 };
 
 export async function fetchFullAnalysis(pillarText, sajuInfo, retries = 3, backoff = 2000) {
-  const url = `${CONFIG.BASE_URL}/${CONFIG.MODEL}:generateContent?key=${CONFIG.API_KEY}`;
+  // 모델 ID 앞에 'models/'를 명시적으로 추가하여 요청
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${CONFIG.MODEL}:generateContent?key=${CONFIG.API_KEY}`;
   const prompt = createPrompt(pillarText, sajuInfo);
 
   let response;
