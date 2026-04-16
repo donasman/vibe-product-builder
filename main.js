@@ -24,8 +24,9 @@ let selectedDate = null;
 let currentPillars = null;
 let currentTopic = 'personality'; 
 let fullAnalysisData = null; 
+let abortController = null; // 요청 취소 관리
 
-// (초기화 코드 동일)
+// 초기화 코드 (1900-2100)
 for (let i = 1900; i <= 2100; i++) {
   const opt = document.createElement('option');
   opt.value = i;
@@ -211,6 +212,9 @@ function displayTopicContent(topic) {
 }
 
 async function runAIAnalysis() {
+    if (abortController) abortController.abort();
+    abortController = new AbortController();
+    
     const pillarText = currentPillars.map(p => p.data).join(' ');
     const sajuInfo = sajuTextDisplay.innerText;
     
@@ -218,12 +222,12 @@ async function runAIAnalysis() {
     otherTabs.forEach(btn => btn.disabled = true);
 
     try {
-        fullAnalysisData = await fetchFullAnalysis(pillarText, sajuInfo);
-        // 분석 완료 시 로딩 감추고 결과 영역 표시
+        fullAnalysisData = await fetchFullAnalysis(pillarText, sajuInfo, 3, 2000, abortController.signal);
         aiLoading.classList.add('hidden');
         aiResultArea.classList.remove('hidden');
         displayTopicContent(currentTopic);
     } catch (error) {
+        if (error.name === 'AbortError') return;
         console.error(error);
         aiLoading.classList.add('hidden');
         aiResultArea.classList.remove('hidden');

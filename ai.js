@@ -1,6 +1,6 @@
 export const CONFIG = {
   API_KEY: 'AIzaSyCXl9anPpc8BfMz1jB3qj7b7ZTR31hp_h8',
-  MODEL: 'gemini-2.5-flash',
+  MODEL: 'gemini-1.5-flash',
   BASE_URL: 'https://generativelanguage.googleapis.com/v1beta/models'
 };
 
@@ -13,8 +13,7 @@ export const createPrompt = (pillarText, sajuInfo) => {
 일시: ${sajuInfo}`;
 };
 
-export async function fetchFullAnalysis(pillarText, sajuInfo, retries = 3, backoff = 2000) {
-  // 모델 ID 앞에 'models/'를 명시적으로 추가하여 요청
+export async function fetchFullAnalysis(pillarText, sajuInfo, retries = 3, backoff = 2000, signal = null) {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${CONFIG.MODEL}:generateContent?key=${CONFIG.API_KEY}`;
   const prompt = createPrompt(pillarText, sajuInfo);
 
@@ -23,7 +22,8 @@ export async function fetchFullAnalysis(pillarText, sajuInfo, retries = 3, backo
     response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+      signal // 취소 신호 전달
     });
 
     if (response.ok) break;
@@ -41,3 +41,4 @@ export async function fetchFullAnalysis(pillarText, sajuInfo, retries = 3, backo
   }
   return data.candidates[0].content.parts[0].text;
 }
+
