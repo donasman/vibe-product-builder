@@ -232,15 +232,24 @@ async function runAIAnalysis() {
     } catch (error) {
         if (error.name === 'AbortError') return;
         console.error(error);
+        
+        // 에러 발생 시 UI 상태
         aiLoading.classList.add('hidden');
         aiResultArea.classList.remove('hidden');
+        
         aiContent.innerHTML = `
             <div style="text-align: center; padding: 20px;">
                 <p style="color:red; margin-bottom: 20px;">분석 중 오류가 발생했습니다: ${error.message}</p>
                 <button id="retryBtn" class="confirm-btn" style="padding: 10px 20px; font-size: 0.9rem;">다시 시도하기</button>
             </div>
         `;
-        document.getElementById('retryBtn').onclick = runAIAnalysis;
+        
+        // 다시 시도 버튼 클릭 시 로딩 화면으로 전환 후 분석 재실행
+        document.getElementById('retryBtn').onclick = () => {
+            aiResultArea.classList.add('hidden');
+            aiLoading.classList.remove('hidden');
+            runAIAnalysis();
+        };
         fullAnalysisData = null;
     } finally {
         otherTabs.forEach(btn => btn.disabled = false);
