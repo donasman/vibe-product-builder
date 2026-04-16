@@ -219,13 +219,17 @@ async function runAIAnalysis() {
 
     try {
         fullAnalysisData = await fetchFullAnalysis(pillarText, sajuInfo);
-        if (currentTopic !== 'personality') displayTopicContent(currentTopic);
+        // 분석 완료 시 로딩 감추고 결과 영역 표시
+        aiLoading.classList.add('hidden');
+        aiResultArea.classList.remove('hidden');
+        displayTopicContent(currentTopic);
     } catch (error) {
         console.error(error);
-        if (currentTopic !== 'personality') aiContent.innerHTML = `<p style="color:red;">오류: ${error.message}</p>`;
+        aiLoading.classList.add('hidden');
+        aiResultArea.classList.remove('hidden');
+        aiContent.innerHTML = `<p style="color:red;">오류: ${error.message}</p>`;
         fullAnalysisData = null;
     } finally {
-        aiLoading.classList.add('hidden');
         otherTabs.forEach(btn => btn.disabled = false);
     }
 }
