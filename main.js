@@ -19,7 +19,7 @@ const analysisTabs = document.querySelector('.analysis-tabs');
 let currentDate = new Date();
 let selectedDate = null;
 let currentPillars = null;
-let currentTopic = 'general';
+let currentTopic = 'personality'; // 기본 탭을 성격으로 변경
 let fullAnalysisData = null; // 전체 분석 결과를 저장할 변수
 let currentSajuInfo = null; // 현재 사주 정보 캐시
 
@@ -59,6 +59,7 @@ const elementsMap = {
 
 const elementsDesc = { 'wood': '나무(木)', 'fire': '불(火)', 'earth': '흙(土)', 'metal': '금(金)', 'water': '물(수)' };
 
+// 일간별 성격 정보
 const dayMasterInfo = {
   '甲': { title: '갑목(甲木) - 숲속의 큰 나무', desc: '강직하고 진취적이며 우두머리 기질이 있습니다. 성실하고 책임감이 강하지만, 때로는 고집이 세고 융통성이 부족할 수 있습니다.' },
   '乙': { title: '을목(乙木) - 유연한 꽃과 넝쿨', desc: '외유내강의 전형으로 환경 적응력이 뛰어납니다. 사교적이고 부드러우며 끈기가 있지만, 남에게 의지하려는 성향이 있을 수 있습니다.' },
@@ -73,247 +74,246 @@ const dayMasterInfo = {
 };
 
 function renderCalendar() {
-  const year = currentDate.getFullYear();
-  const month = currentDate.getMonth();
-  yearSelectHeader.value = year;
-  monthSelectHeader.value = month;
-  
-  const firstDayOfMonth = new Date(year, month, 1).getDay();
-  const lastDateOfMonth = new Date(year, month + 1, 0).getDate();
-  
-  calendarDays.innerHTML = "";
-  for (let i = 0; i < firstDayOfMonth; i++) {
-    const dayDiv = document.createElement("div");
-    dayDiv.classList.add("day", "empty");
-    calendarDays.appendChild(dayDiv);
-  }
-  for (let i = 1; i <= lastDateOfMonth; i++) {
-    const dayDiv = document.createElement("div");
-    dayDiv.classList.add("day");
-    dayDiv.innerText = i;
-    const today = new Date();
-    if (i === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
-      dayDiv.classList.add("today");
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    yearSelectHeader.value = year;
+    monthSelectHeader.value = month;
+
+    const firstDayOfMonth = new Date(year, month, 1).getDay();
+    const lastDateOfMonth = new Date(year, month + 1, 0).getDate();
+
+    calendarDays.innerHTML = "";
+    for (let i = 0; i < firstDayOfMonth; i++) {
+        const dayDiv = document.createElement("div");
+        dayDiv.classList.add("day", "empty");
+        calendarDays.appendChild(dayDiv);
     }
-    if (selectedDate && i === selectedDate.getDate() && month === selectedDate.getMonth() && year === selectedDate.getFullYear()) {
-      dayDiv.classList.add("selected");
+    for (let i = 1; i <= lastDateOfMonth; i++) {
+        const dayDiv = document.createElement("div");
+        dayDiv.classList.add("day");
+        dayDiv.innerText = i;
+        const today = new Date();
+        if (i === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
+            dayDiv.classList.add("today");
+        }
+        if (selectedDate && i === selectedDate.getDate() && month === selectedDate.getMonth() && year === selectedDate.getFullYear()) {
+            dayDiv.classList.add("selected");
+        }
+        dayDiv.addEventListener("click", () => {
+            selectedDate = new Date(year, month, i);
+            updateSelectedDisplay();
+            renderCalendar();
+        });
+        calendarDays.appendChild(dayDiv);
     }
-    dayDiv.addEventListener("click", () => {
-      selectedDate = new Date(year, month, i);
-      updateSelectedDisplay();
-      renderCalendar();
-    });
-    calendarDays.appendChild(dayDiv);
-  }
 }
 
 function updateSelectedDisplay() {
-  if (selectedDate) {
-    selectedDateDisplay.innerText = `${selectedDate.getFullYear()}년 ${selectedDate.getMonth() + 1}월 ${selectedDate.getDate()}일`;
-    confirmBtn.disabled = false;
-  }
+    if (selectedDate) {
+        selectedDateDisplay.innerText = `${selectedDate.getFullYear()}년 ${selectedDate.getMonth() + 1}월 ${selectedDate.getDate()}일`;
+        confirmBtn.disabled = false;
+    }
 }
 
 function getPillar(eightChar, lunar, type) {
-  const methods = [`get${type}`, `get${type}GanZhi`, `get${type}InGanZhi`, type === 'Hour' ? 'getTime' : null, type === 'Hour' ? 'getTimeGanZhi' : null].filter(Boolean);
-  for (let m of methods) {
-    if (typeof eightChar[m] === 'function') return eightChar[m]();
-  }
-  const ganMethod = `get${type}Gan`, zhiMethod = `get${type}Zhi`;
-  if (typeof eightChar[ganMethod] === 'function' && typeof eightChar[zhiMethod] === 'function') {
-    return eightChar[ganMethod]() + eightChar[zhiMethod]();
-  }
-  return "??";
+    const methods = [`get${type}`, `get${type}GanZhi`, `get${type}InGanZhi`, type === 'Hour' ? 'getTime' : null, type === 'Hour' ? 'getTimeGanZhi' : null].filter(Boolean);
+    for (let m of methods) {
+        if (typeof eightChar[m] === 'function') return eightChar[m]();
+    }
+    const ganMethod = `get${type}Gan`, zhiMethod = `get${type}Zhi`;
+    if (typeof eightChar[ganMethod] === 'function' && typeof eightChar[zhiMethod] === 'function') {
+        return eightChar[ganMethod]() + eightChar[zhiMethod]();
+    }
+    return "??";
 }
 
 function updateInterpretation(pillars) {
-  const elementsCount = { 'wood': 0, 'fire': 0, 'earth': 0, 'metal': 0, 'water': 0 };
-  pillars.forEach(p => {
-    if (!p.data) return;
-    const stem = p.data.substring(0, 1), branch = p.data.substring(1, 2);
-    if (elementsMap[stem]) elementsCount[elementsMap[stem]]++;
-    if (elementsMap[branch]) elementsCount[elementsMap[branch]]++;
-  });
-  
-  const dayMaster = pillars.find(p => p.id === 'dayPillar').data.substring(0, 1);
-  const info = dayMasterInfo[dayMaster] || { title: '분석 불가', desc: '정확한 정보를 불러올 수 없습니다.' };
-  document.getElementById('dayMasterTitle').innerText = info.title;
-  document.getElementById('personalityText').innerText = info.desc;
-  
-  const statsContainer = document.getElementById('elementsStats');
-  statsContainer.innerHTML = '';
-  
-  Object.keys(elementsCount).forEach(key => {
-    const count = elementsCount[key], percentage = (count / 8) * 100;
-    const row = document.createElement('div');
-    row.className = 'stat-row';
-    row.innerHTML = `
+    const elementsCount = { 'wood': 0, 'fire': 0, 'earth': 0, 'metal': 0, 'water': 0 };
+    pillars.forEach(p => {
+        if (!p.data) return;
+        const stem = p.data.substring(0, 1), branch = p.data.substring(1, 2);
+        if (elementsMap[stem]) elementsCount[elementsMap[stem]]++;
+        if (elementsMap[branch]) elementsCount[elementsMap[branch]]++;
+    });
+
+    const statsContainer = document.getElementById('elementsStats');
+    statsContainer.innerHTML = '';
+
+    Object.keys(elementsCount).forEach(key => {
+        const count = elementsCount[key], percentage = (count / 8) * 100;
+        const row = document.createElement('div');
+        row.className = 'stat-row';
+        row.innerHTML = `
       <div class="stat-label">${elementsDesc[key]}</div>
       <div class="stat-bar-bg">
         <div class="stat-bar-fill" style="width: 0; background-color: var(--${key})"></div>
       </div>
       <div class="stat-count">${count}</div>
     `;
-    statsContainer.appendChild(row);
-    
-    setTimeout(() => {
-      row.querySelector('.stat-bar-fill').style.width = `${percentage}%`;
-    }, 100);
-  });
+        statsContainer.appendChild(row);
+
+        setTimeout(() => {
+            row.querySelector('.stat-bar-fill').style.width = `${percentage}%`;
+        }, 100);
+    });
 }
 
 function calculateSaju() {
-  if (!selectedDate) return;
-  const year = selectedDate.getFullYear(), month = selectedDate.getMonth() + 1, day = selectedDate.getDate(), hour = parseInt(hourSelect.value), minute = parseInt(minuteSelect.value);
-  
-  if (typeof Solar === 'undefined') { alert("라이브러리를 불러오는 중입니다. 잠시 후 다시 시도해주세요."); return; }
-  
-  try {
-    const solar = Solar.fromYmdHms(year, month, day, hour, minute, 0), lunar = solar.getLunar(), eightChar = lunar.getEightChar();
-    const yearP = getPillar(eightChar, lunar, 'Year'), monthP = getPillar(eightChar, lunar, 'Month'), dayP = getPillar(eightChar, lunar, 'Day'), hourP = getPillar(eightChar, lunar, 'Hour');
-    
-    currentPillars = [{ id: 'yearPillar', data: yearP }, { id: 'monthPillar', data: monthP }, { id: 'dayPillar', data: dayP }, { id: 'hourPillar', data: hourP }];
-    
-    currentPillars.forEach(p => {
-      const el = document.getElementById(p.id);
-      if (!el || !p.data) return;
-      const stem = p.data.substring(0, 1), branch = p.data.substring(1, 2);
-      const stemDiv = el.querySelector('.stem'), branchDiv = el.querySelector('.branch');
-      if (stemDiv) { stemDiv.innerText = stem; stemDiv.className = `stem ${elementsMap[stem] || ''}`; }
-      if (branchDiv) { branchDiv.innerText = branch; branchDiv.className = `branch ${elementsMap[branch] || ''}`; }
-    });
-    
-    updateInterpretation(currentPillars);
-    sajuTextDisplay.innerText = `${yearP}년 ${monthP}월 ${dayP}일 ${hourP}시`;
-    
-    resultContainer.classList.remove('hidden');
-    resultContainer.scrollIntoView({ behavior: 'smooth' });
+    if (!selectedDate) return;
+    const year = selectedDate.getFullYear(), month = selectedDate.getMonth() + 1, day = selectedDate.getDate(), hour = parseInt(hourSelect.value), minute = parseInt(minuteSelect.value);
 
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    const generalTab = document.querySelector('.tab-btn[data-topic="general"]');
-    generalTab.classList.add('active');
-    currentTopic = 'general';
-    fullAnalysisData = null;
-    
-    getAIFullAnalysis();
+    if (typeof Solar === 'undefined') { alert("라이브러리를 불러오는 중입니다. 잠시 후 다시 시도해주세요."); return; }
 
-  } catch (error) { console.error("Saju error:", error); alert("계산 중 오류가 발생했습니다."); }
+    try {
+        const solar = Solar.fromYmdHms(year, month, day, hour, minute, 0), lunar = solar.getLunar(), eightChar = lunar.getEightChar();
+        const yearP = getPillar(eightChar, lunar, 'Year'), monthP = getPillar(eightChar, lunar, 'Month'), dayP = getPillar(eightChar, lunar, 'Day'), hourP = getPillar(eightChar, lunar, 'Hour');
+
+        currentPillars = [{ id: 'yearPillar', data: yearP }, { id: 'monthPillar', data: monthP }, { id: 'dayPillar', data: dayP }, { id: 'hourPillar', data: hourP }];
+
+        currentPillars.forEach(p => {
+            const el = document.getElementById(p.id);
+            if (!el || !p.data) return;
+            const stem = p.data.substring(0, 1), branch = p.data.substring(1, 2);
+            const stemDiv = el.querySelector('.stem'), branchDiv = el.querySelector('.branch');
+            if (stemDiv) { stemDiv.innerText = stem; stemDiv.className = `stem ${elementsMap[stem] || ''}`; }
+            if (branchDiv) { branchDiv.innerText = branch; branchDiv.className = `branch ${elementsMap[branch] || ''}`; }
+        });
+
+        updateInterpretation(currentPillars);
+        sajuTextDisplay.innerText = `${yearP}년 ${monthP}월 ${dayP}일 ${hourP}시`;
+
+        resultContainer.classList.remove('hidden');
+        resultContainer.scrollIntoView({ behavior: 'smooth' });
+
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        const personalityTab = document.querySelector('.tab-btn[data-topic="personality"]');
+        personalityTab.classList.add('active');
+        currentTopic = 'personality';
+        fullAnalysisData = null; // 분석 데이터 초기화
+        
+        // 1. 성격 탭 내용 즉시 표시
+        displayTopicContent('personality');
+        aiResultArea.classList.remove('hidden');
+        aiLoading.classList.add('hidden');
+        
+        // 2. 나머지 운세 정보는 백그라운드에서 가져옴
+        getAIFullAnalysis();
+
+    } catch (error) { console.error("Saju error:", error); alert("계산 중 오류가 발생했습니다."); }
 }
 
-// 저장된 전체 분석 데이터에서 특정 주제에 해당하는 내용을 파싱하여 보여주는 함수
 function displayTopicContent(topic) {
-  if (!fullAnalysisData) {
-    aiContent.innerHTML = "<p>아직 분석 데이터가 없습니다. AI 분석을 먼저 실행해주세요.</p>";
-    return;
-  }
+    aiLoading.classList.add('hidden');
 
-  const topicInfo = {
-    general: { name: '종합운', pattern: '종합( ?운)?' },
-    job:     { name: '직업운', pattern: '직업( ?운)?' },
-    love:    { name: '연애운', pattern: '연애( ?운)?' },
-    wealth:  { name: '재물운', pattern: '재물( ?운)?' }
-  };
-  
-  const currentTopicInfo = topicInfo[topic];
-  if (!currentTopicInfo) return;
-
-  // MORE ROBUST REGEX: Look for ###, optional spaces, then the topic pattern.
-  const regex = new RegExp(`(###\s*${currentTopicInfo.pattern}[\s\S]*?)(?=(###|$))`);
-  const match = fullAnalysisData.match(regex);
-
-  let contentToShow = '';
-  if (match && match[1]) {
-    contentToShow = match[1].trim();
-  } else {
-    // If no match, display an error (unless it's the general tab, then show all)
-    if (topic === 'general') {
-      contentToShow = fullAnalysisData;
-    } else {
-      contentToShow = `### 오류\n'${currentTopicInfo.name}'에 대한 분석을 찾을 수 없습니다. 종합 분석 내용을 확인해주세요.`
+    if (topic === 'personality') {
+        if (!currentPillars) return;
+        const dayMaster = currentPillars.find(p => p.id === 'dayPillar').data.substring(0, 1);
+        const info = dayMasterInfo[dayMaster] || { title: '분석 불가', desc: '정확한 정보를 불러올 수 없습니다.' };
+        const content = `### ${info.title}\n${info.desc}`;
+        aiContent.innerHTML = marked.parse(content);
+        return;
     }
-  }
 
-  aiContent.innerHTML = marked.parse(contentToShow);
-  aiResultArea.classList.remove('hidden');
+    if (!fullAnalysisData) {
+        aiLoading.classList.remove('hidden');
+        aiContent.innerHTML = ""; 
+        return;
+    }
+    
+    const topicInfo = {
+        job: { name: '직업운', pattern: '직업( ?운)?' },
+        love: { name: '연애운', pattern: '연애( ?운)?' },
+        wealth: { name: '재물운', pattern: '재물( ?운)?' }
+    };
+
+    const currentTopicInfo = topicInfo[topic];
+    if (!currentTopicInfo) return;
+
+    const regex = new RegExp(`(###\s*${currentTopicInfo.pattern}[\s\S]*?)(?=(###|$))`);
+    const match = fullAnalysisData.match(regex);
+
+    let contentToShow = '';
+    if (match && match[1]) {
+        contentToShow = match[1].trim();
+    } else {
+        contentToShow = `### 오류\n'${currentTopicInfo.name}'에 대한 분석을 찾을 수 없습니다. AI가 아직 답변을 생성 중이거나, 내용을 분석하는 데 실패했습니다. 잠시 후 다시 시도해주세요.`;
+    }
+
+    aiContent.innerHTML = marked.parse(contentToShow);
 }
 
-// 모든 주제에 대한 AI 분석을 한 번에 요청하는 함수
 async function getAIFullAnalysis() {
-  const sajuInfo = sajuTextDisplay.innerText;
-  if (fullAnalysisData && currentSajuInfo === sajuInfo) {
-    displayTopicContent(currentTopic);
-    return;
-  }
-  currentSajuInfo = sajuInfo;
+    const sajuInfo = sajuTextDisplay.innerText;
+    currentSajuInfo = sajuInfo;
 
-  const apiKey = 'AIzaSyCXl9anPpc8BfMz1jB3qj7b7ZTR31hp_h8';
-  const selectedModel = 'gemini-2.5-flash';
+    const apiKey = 'AIzaSyCXl9anPpc8BfMz1jB3qj7b7ZTR31hp_h8';
+    const selectedModel = 'gemini-2.5-flash';
 
-  if (!currentPillars) return;
+    if (!currentPillars) return;
 
-  aiLoading.classList.remove('hidden');
-  analysisTabs.querySelectorAll('button').forEach(btn => btn.disabled = true);
-  aiResultArea.classList.add('hidden');
+    const otherTabs = analysisTabs.querySelectorAll('button:not([data-topic="personality"])');
+    otherTabs.forEach(btn => btn.disabled = true);
 
-  const pillarText = currentPillars.map(p => p.data).join(' ');
-  const prompt = `너는 현대적인 관점에서 사주를 해석하는 명리학 전문가야. 다음 사주 데이터를 바탕으로, 아래 각 주제에 대해 상세하게 풀이해줘.
-각 주제는 반드시 다음 형식을 따라서 '### 주제명'으로 시작해야해: '### 종합운', '### 직업운', '### 연애운', '### 재물운'.
+    const pillarText = currentPillars.map(p => p.data).join(' ');
+    const prompt = `너는 현대적인 관점에서 사주를 해석하는 명리학 전문가야. 다음 사주 데이터를 바탕으로, 아래 각 주제에 대해 상세하게 풀이해줘.
+각 주제는 반드시 다음 형식을 따라서 '### 주제명'으로 시작해야해: '### 직업운', '### 연애운', '### 재물운'.
 답변은 마크다운 형식의 한국어로, 친근하고 이해하기 쉽게 작성해줘.
 
 사주: ${pillarText}
 일시: ${sajuTextDisplay.innerText}`;
 
-  try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`;
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-    });
+    try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`;
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+        });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(`API 오류: ${response.status} - ${errorData.error?.message || '알 수 없는 오류'}`);
-    }
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(`API 오류: ${response.status} - ${errorData.error?.message || '알 수 없는 오류'}`);
+        }
 
-    const data = await response.json();
-    if (data.candidates && data.candidates[0].content) {
-      fullAnalysisData = data.candidates[0].content.parts[0].text; // 전체 결과 저장
-      displayTopicContent(currentTopic); // 현재 활성화된 탭(종합) 내용 표시
-    } else {
-      throw new Error("API로부터 유효한 답변을 받지 못했습니다.");
+        const data = await response.json();
+        if (data.candidates && data.candidates[0].content) {
+            fullAnalysisData = data.candidates[0].content.parts[0].text;
+            if (currentTopic !== 'personality') {
+                displayTopicContent(currentTopic);
+            }
+        } else {
+            throw new Error("API로부터 유효한 답변을 받지 못했습니다.");
+        }
+    } catch (error) {
+        console.error("Gemini API call failed:", error);
+        if (currentTopic !== 'personality') {
+            aiContent.innerHTML = `<p style="color:red;"><strong>오류가 발생했습니다:</strong> ${error.message}</p><p>잠시 후 다시 시도해주세요.</p>`;
+        }
+        fullAnalysisData = null;
+    } finally {
+        aiLoading.classList.add('hidden');
+        otherTabs.forEach(btn => btn.disabled = false);
     }
-  } catch (error) {
-    console.error("Gemini API call failed:", error);
-    aiContent.innerHTML = `<p style="color:red;"><strong>오류가 발생했습니다:</strong> ${error.message}</p><p>잠시 후 다시 시도해주세요.</p>`;
-    aiResultArea.classList.remove('hidden');
-    fullAnalysisData = null;
-  } finally {
-    aiLoading.classList.add('hidden');
-    analysisTabs.querySelectorAll('button').forEach(btn => btn.disabled = false);
-  }
 }
 
-// --- 이벤트 리스너 --- //
 
+// --- 이벤트 리스너 --- //
 yearSelectHeader.addEventListener('change', () => { currentDate.setFullYear(yearSelectHeader.value); renderCalendar(); });
 monthSelectHeader.addEventListener('change', () => { currentDate.setMonth(monthSelectHeader.value); renderCalendar(); });
 prevMonthBtn.onclick = () => { currentDate.setMonth(currentDate.getMonth() - 1); renderCalendar(); };
 nextMonthBtn.onclick = () => { currentDate.setMonth(currentDate.getMonth() + 1); renderCalendar(); };
 confirmBtn.onclick = calculateSaju;
 
-// 탭 클릭 이벤트 (API 호출 없이 내용만 변경)
 analysisTabs.addEventListener('click', (e) => {
-  if (e.target.tagName === 'BUTTON') {
-    const topic = e.target.dataset.topic;
-    if (topic !== currentTopic) {
-      currentTopic = topic;
-      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-      e.target.classList.add('active');
-      
-      displayTopicContent(topic);
+    if (e.target.tagName === 'BUTTON') {
+        const topic = e.target.dataset.topic;
+        if (topic !== currentTopic) {
+            currentTopic = topic;
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            e.target.classList.add('active');
+            displayTopicContent(topic);
+        }
     }
-  }
 });
 
 renderCalendar();

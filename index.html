@@ -79,7 +79,7 @@
       <div class="interpretation-section">
         <!-- AI 분석 탭 -->
         <div class="analysis-tabs">
-          <button class="tab-btn active" data-topic="general">종합 분석</button>
+          <button class="tab-btn active" data-topic="personality">성격</button>
           <button class="tab-btn" data-topic="job">직업운</button>
           <button class="tab-btn" data-topic="love">연애운</button>
           <button class="tab-btn" data-topic="wealth">재물운</button>
@@ -92,17 +92,14 @@
         </div>
 
         <!-- AI 결과 -->
-        <div id="aiResultArea" class="ai-result-area hidden">
+        <div id="aiResultArea" class="ai-result-area">
           <div id="aiContent" class="markdown-body"></div>
         </div>
 
         <h4>📊 오행 에너지 분포</h4>
         <div id="elementsStats" class="elements-stats"></div>
         
-        <div class="personality-card">
-          <h4 id="dayMasterTitle">나의 기질 분석</h4>
-          <p id="personalityText"></p>
-        </div>
+        <!-- 성격 분석 카드는 JS에서 동적으로 aiContent에 삽입됩니다. -->
       </div>
     </div>
   </div>
