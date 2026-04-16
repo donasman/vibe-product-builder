@@ -1,12 +1,12 @@
 export const CONFIG = {
   API_KEY: 'AIzaSyCXl9anPpc8BfMz1jB3qj7b7ZTR31hp_h8',
-  MODEL: 'gemini-2.5-flash',
+  MODEL: 'gemini-1.5-flash',
   BASE_URL: 'https://generativelanguage.googleapis.com/v1'
 };
 
-export const createPrompt = (pillarText, sajuInfo) => {
+export const createPrompt = (pillarText, sajuInfo, name) => {
   return `너는 현대적인 관점에서 사주를 해석하는 명리학 전문가야. 다음 사주 데이터를 바탕으로, 아래 각 주제에 대해 상세하게 풀이해줘.
-
+이름: ${name || '익명'}
 각 주제는 반드시 다음 형식을 따라서 '### 주제명'으로 시작해야 해: '### 직업운', '### 연애운', '### 재물운', '### 보완할 점과 장소'.
 
 요구사항:
@@ -18,10 +18,9 @@ export const createPrompt = (pillarText, sajuInfo) => {
 일시: ${sajuInfo}`;
 };
 
-export async function fetchFullAnalysis(pillarText, sajuInfo, retries = 3, backoff = 2000, signal = null) {
-  // 정확한 API 규격에 맞춘 URL 구성
+export async function fetchFullAnalysis(pillarText, sajuInfo, name, retries = 3, backoff = 2000, signal = null) {
   const url = `${CONFIG.BASE_URL}/models/${CONFIG.MODEL}:generateContent?key=${CONFIG.API_KEY}`;
-  const prompt = createPrompt(pillarText, sajuInfo);
+  const prompt = createPrompt(pillarText, sajuInfo, name);
 
   const response = await fetch(url, {
     method: 'POST',

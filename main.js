@@ -12,6 +12,7 @@ const hourSelect = document.getElementById('hourSelect');
 const minuteSelect = document.getElementById('minuteSelect');
 const resultContainer = document.getElementById('resultContainer');
 const sajuTextDisplay = document.getElementById('sajuText');
+const nameInput = document.getElementById('nameInput'); // 이름 입력 필드
 
 // AI Elements
 const aiLoading = document.getElementById('aiLoading');
@@ -24,9 +25,9 @@ let selectedDate = null;
 let currentPillars = null;
 let currentTopic = 'personality'; 
 let fullAnalysisData = null; 
-let abortController = null; // 요청 취소 관리
+let abortController = null; 
 
-// 초기화 코드 (1900-2100)
+// (초기화 코드 동일)
 for (let i = 1900; i <= 2100; i++) {
   const opt = document.createElement('option');
   opt.value = i;
@@ -218,17 +219,17 @@ async function runAIAnalysis() {
     
     const pillarText = currentPillars.map(p => p.data).join(' ');
     const sajuInfo = sajuTextDisplay.innerText;
+    const name = nameInput.value; // 이름 정보 가져오기
     
     const otherTabs = analysisTabs.querySelectorAll('button:not([data-topic="personality"])');
     otherTabs.forEach(btn => btn.disabled = true);
-try {
-    fullAnalysisData = await fetchFullAnalysis(pillarText, sajuInfo, abortController.signal);
-    // 분석 완료 시 로딩 감추고 결과 영역 표시
-    aiLoading.classList.add('hidden');
-    aiResultArea.classList.remove('hidden');
-    displayTopicContent(currentTopic);
-} catch (error) {
 
+    try {
+        fullAnalysisData = await fetchFullAnalysis(pillarText, sajuInfo, name, 3, 2000, abortController.signal);
+        aiLoading.classList.add('hidden');
+        aiResultArea.classList.remove('hidden');
+        displayTopicContent(currentTopic);
+    } catch (error) {
         if (error.name === 'AbortError') return;
         console.error(error);
         aiLoading.classList.add('hidden');

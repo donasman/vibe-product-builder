@@ -27,15 +27,21 @@
       </div>
       <div id="calendarDays" class="calendar-days"></div>
       
-      <!-- 시간 선택 -->
-      <div class="time-selection">
+      <!-- 이름 및 시간 선택 -->
+      <div class="time-selection" style="flex-direction: column;">
         <div class="input-group">
-          <label>태어난 시간</label>
-          <select id="hourSelect"></select>
+          <label>한자 이름 (본명)</label>
+          <input type="text" id="nameInput" placeholder="예: 金哲秀" style="width: 100%; padding: 12px; border: 1px solid var(--card-border); border-radius: 12px;">
         </div>
-        <div class="input-group">
-          <label>분</label>
-          <select id="minuteSelect"></select>
+        <div style="display: flex; gap: 16px;">
+          <div class="input-group" style="flex: 1;">
+            <label>태어난 시간</label>
+            <select id="hourSelect"></select>
+          </div>
+          <div class="input-group" style="flex: 1;">
+            <label>분</label>
+            <select id="minuteSelect"></select>
+          </div>
         </div>
       </div>
 

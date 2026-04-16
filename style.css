@@ -325,6 +325,7 @@ body {
 }
 
 .tab-btn::after {
+
   
   content: '';
   position: absolute;
