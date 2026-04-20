@@ -13,7 +13,7 @@ export async function onRequestPost(context) {
 
     // Cloudflare Environment Variables (Must be set in CF Dashboard)
     const AI_API_KEY = env.AI_API_KEY;
-    const AI_MODEL = env.AI_MODEL || 'gemini-1.5-flash';
+    const AI_MODEL = 'gemini-1.5-flash'; // Fixed to gemini-1.5-flash
 
     const prompt = `너는 현대적인 관점에서 사주를 해석하는 명리학 전문가야. 다음 사주 데이터를 바탕으로, 아래 각 주제에 대해 상세하게 풀이해줘.
 이름: ${name || '익명'}
