@@ -1,5 +1,5 @@
 export const CONFIG = {
-  BASE_URL: 'http://localhost:3000'
+  BASE_URL: ''
 };
 
 export async function fetchFullAnalysis(pillarText, sajuInfo, name, retries = 3, backoff = 2000, signal = null) {
